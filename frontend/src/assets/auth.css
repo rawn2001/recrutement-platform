@@ -1,0 +1,52 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --primary: #6C63FF; --primary-dark: #5A52D5; --accent: #FF6584;
+  --bg: #F4F6FB; --card-bg: #FFFFFF; --text: #1A1A2E; --text-muted: #6B7280;
+  --border: #E5E7EB; --error: #EF4444; --radius: 12px; --shadow: 0 4px 24px rgba(108, 99, 255, 0.10);
+}
+body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); }
+
+.auth-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; background: linear-gradient(135deg, #f0f0ff 0%, #fff5f7 100%); }
+.auth-card { background: var(--card-bg); border-radius: 20px; padding: 40px; width: 100%; max-width: 420px; box-shadow: var(--shadow); }
+.auth-card-wide { max-width: 580px; }
+.auth-logo { text-align: center; margin-bottom: 24px; }
+.logo-text { font-size: 24px; font-weight: 700; color: var(--text); }
+.logo-accent { color: var(--primary); }
+h2 { font-size: 22px; font-weight: 600; margin-bottom: 6px; }
+.auth-subtitle { color: var(--text-muted); font-size: 14px; margin-bottom: 24px; }
+
+.social-buttons { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+.btn-social { display: flex; align-items: center; gap: 10px; justify-content: center; padding: 11px 16px; border-radius: 10px; border: 1.5px solid var(--border); background: #fff; font-size: 14px; font-weight: 500; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
+.btn-social:hover { border-color: var(--primary); background: #f8f7ff; }
+.btn-google { color: #1A1A2E; }
+.btn-linkedin { color: #fff; background: #0A66C2; border-color: #0A66C2; }
+.btn-linkedin:hover { background: #004182; }
+
+.divider { display: flex; align-items: center; gap: 12px; margin: 20px 0; color: var(--text-muted); font-size: 13px; }
+.divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+.role-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 24px; }
+.role-card { border: 2px solid var(--border); border-radius: 14px; padding: 20px 14px; background: #fff; cursor: pointer; text-align: center; transition: border-color 0.2s, box-shadow 0.2s; }
+.role-card:hover { border-color: var(--primary); box-shadow: 0 2px 12px rgba(108,99,255,0.12); }
+.role-icon { font-size: 28px; margin-bottom: 8px; }
+.role-title { font-weight: 600; font-size: 15px; margin-bottom: 4px; }
+.role-desc { color: var(--text-muted); font-size: 12px; }
+
+.field { margin-bottom: 16px; }
+.field label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; color: var(--text); }
+.field input, .field select { width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 14px; outline: none; background: #fff; transition: border-color 0.2s; }
+.field input:focus, .field select:focus { border-color: var(--primary); }
+
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.radio-row { display: flex; gap: 20px; padding: 8px 0; }
+.radio-label { display: flex; align-items: center; gap: 6px; font-size: 14px; cursor: pointer; }
+.radio-label input { width: 16px; height: 16px; accent-color: var(--primary); }
+
+.btn-primary { width: 100%; padding: 13px; border-radius: 10px; background: var(--primary); color: #fff; border: none; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s; margin-top: 8px; }
+.btn-primary:hover:not(:disabled) { background: var(--primary-dark); }
+.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.error-msg { background: #FEF2F2; color: var(--error); border: 1px solid #FECACA; border-radius: 8px; padding: 10px 14px; font-size: 13px; margin-bottom: 12px; }
+.auth-switch { text-align: center; margin-top: 20px; font-size: 14px; color: var(--text-muted); }
+.auth-switch a { color: var(--primary); font-weight: 500; text-decoration: none; }
+.auth-switch a:hover { text-decoration: underline; }

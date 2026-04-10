@@ -1,0 +1,46 @@
+.home-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 32px; background: var(--card-bg);
+  border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10;
+}
+.hero-section {
+  max-width: 700px; margin: 0 auto;
+  padding: 80px 24px; text-align: center;
+}
+/* Ajoute à la fin de ton fichier Auth.css existant */
+
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.phone-row { display: flex; gap: 8px; }
+.phone-row select { width: 90px; flex-shrink: 0; }
+.phone-row input { flex: 1; }
+.radio-row { display: flex; gap: 20px; padding: 8px 0; }
+.auth-card-wide { max-width: 580px; }
+
+/* OTP inputs pour VerifyCode */
+input[id^="otp-"] {
+  width: 52px !important;
+  height: 56px !important;
+  text-align: center !important;
+  font-size: 22px !important;
+  font-weight: 600 !important;
+}
+.hero-badge {
+  display: inline-block; background: #EEEDFe; color: #534AB7;
+  font-size: 13px; font-weight: 500; padding: 6px 16px;
+  border-radius: 20px; margin-bottom: 20px;
+}
+.hero-section h1 { font-size: 42px; font-weight: 600; line-height: 1.2; margin-bottom: 16px; }
+.hero-accent { color: var(--primary); }
+.hero-section p { font-size: 17px; color: var(--text-muted); margin-bottom: 36px; }
+.hero-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.btn-hero-primary {
+  padding: 14px 32px; background: var(--primary); color: #fff;
+  border: none; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer;
+}
+.btn-hero-primary:hover { background: var(--primary-dark); }
+.btn-hero-secondary {
+  padding: 14px 32px; background: transparent; color: var(--text);
+  border: 1.5px solid var(--border); border-radius: 12px; font-size: 15px; cursor: pointer;
+}
+.btn-outline { padding: 8px 18px; border-radius: 8px; border: 1.5px solid var(--border); background: transparent; cursor: pointer; font-size: 14px; }
+.btn-primary-sm { padding: 8px 18px; border-radius: 8px; background: var(--primary); color: #fff; border: none; cursor: pointer; font-size: 14px; font-weight: 600; }
