@@ -1,11 +1,14 @@
-import { Controller, Get, Post, Req, Res, UseGuards, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Req, Res, UseGuards, Body, Param ,Put } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { Response } from 'express';
-
+import { UpdateProfileDto } from '../auth/dto/update-profile.dto';
+import { UsersService } from '../users/users.service';
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(private authService: AuthService,
+    private readonly usersService: UsersService, 
+  ) {}
 
   @Post('signup/email')
   async signupWithEmail(@Body() data: any) {
@@ -16,7 +19,11 @@ export class AuthController {
   async login(@Body() body: { email: string; password: string }) {
     return this.authService.login(body.email, body.password);
   }
-
+@Put('profile')
+@UseGuards(AuthGuard('jwt'))
+async updateProfile(@Req() req, @Body() updateProfileDto: UpdateProfileDto) {
+  return this.usersService.updateProfile(req.user.id, updateProfileDto);
+}
   @Post('verify/:userId')
   async verifyCode(@Param('userId') userId: string, @Body() body: { code: string }) {
     return this.authService.verifyCode(parseInt(userId), body.code);

@@ -241,7 +241,14 @@ export class AuthService {
 
   async handleSocialLogin(profile: any, provider: string) {
     console.log(`🔵 handleSocialLogin appelé pour ${provider}`);
-    
+    // ✅ AJOUTE CE LOG pour voir ce que le provider envoie
+  console.log('🔵 Profile reçu du provider:', JSON.stringify({
+    email: profile.email,
+    picture: profile.picture,      // Google
+    photo_url: profile.photo_url,  // LinkedIn
+    photos: profile.photos,        // Format alternatif
+    name: profile.name
+  }, null, 2));
     const email = profile.email?.toLowerCase();
     if (!email) {
       console.error('🔴 Email non fourni par le provider');

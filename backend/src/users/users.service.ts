@@ -1,4 +1,4 @@
-﻿import { Injectable } from '@nestjs/common';
+﻿import { Injectable ,NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './users.entity';
@@ -83,4 +83,45 @@ findOneByEmail(email: string): Promise<User | null> {
   async findOneBySocial(email: string, provider: string): Promise<User | null> {
     return this.usersRepo.findOne({ where: { email, social_provider: provider } });
   }
+  async updateProfile(userId: number, data: any) {
+  const user = await this.usersRepo.findOne({ where: { id: userId } });
+  if (!user) throw new NotFoundException('Utilisateur non trouvé');
+
+  // 1️⃣ Mettre à jour les champs utilisateur de base
+  const userFields = ['phone', 'phone_country', 'country', 'city', 'address'];
+  const userUpdate: any = {};
+  userFields.forEach(f => { if (data[f] !== undefined) userUpdate[f] = data[f]; });
+  if (Object.keys(userUpdate).length > 0) {
+    await this.usersRepo.update(userId, userUpdate);
+  }
+
+  // 2️⃣ Mettre à jour le profil selon le rôle
+  if (user.role === 'candidat') {
+    const profile = await this.candidatRepo.findOne({ where: { user: { id: userId } } });
+    if (profile) {
+      const pFields = ['nom', 'prenom', 'profession', 'niveau_etude', 'date_naissance', 'genre'];
+      const pUpdate: any = {};
+      pFields.forEach(f => { if (data[f] !== undefined) pUpdate[f] = data[f]; });
+      if (Object.keys(pUpdate).length > 0) {
+        await this.candidatRepo.update(profile.id, pUpdate);
+      }
+    }
+  } else if (user.role === 'recruteur') {
+    const profile = await this.recruteurRepo.findOne({ where: { user: { id: userId } } });
+    if (profile) {
+      const pFields = ['nom_societe', 'domaine', 'poste_rh', 'date_creation_societe'];
+      const pUpdate: any = {};
+      pFields.forEach(f => { if (data[f] !== undefined) pUpdate[f] = data[f]; });
+      if (Object.keys(pUpdate).length > 0) {
+        await this.recruteurRepo.update(profile.id, pUpdate);
+      }
+    }
+  }
+
+  // 3️⃣ Retourner l'utilisateur mis à jour
+  return this.usersRepo.findOne({
+    where: { id: userId },
+    relations: ['candidatProfile', 'recruteurProfile']
+  });
+}
 }

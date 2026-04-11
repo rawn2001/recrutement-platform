@@ -7,7 +7,8 @@ import SignupCandidat from './pages/Auth/SignupCandidat';
 import SignupRecruteur from './pages/Auth/SignupRecruteur';
 import VerifyCode from './pages/Auth/VerifyCode';
 import Dashboard from './pages/Dashboard/Dashboard';
-
+// 🔹 Ajoute cette ligne avec les autres imports
+import Profile from './pages/Profile/Profile';
 // 🔹 Pages Recruteur (séparées)
 import PostJob from './pages/Recruiter/PostJob';
 import ManageJobs from './pages/Recruiter/ManageJobs';
@@ -42,7 +43,8 @@ export default function App() {
         <Route path="/candidate/jobs" element={<FindJobs />} />
         <Route path="/candidate/jobs/:id" element={<ApplyJob />} />
         <Route path="/candidate/my-applications" element={<MyApplications />} />
-        
+        {/* ✅ AJOUTE CETTE LIGNE */}
+<Route path="/profile" element={<Profile />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </BrowserRouter>

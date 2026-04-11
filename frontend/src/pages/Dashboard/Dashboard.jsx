@@ -4,7 +4,52 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import './Dashboard.css';
 import logo from '../../assets/logo.png';
-
+// 🔹 Composant Avatar (à ajouter après les imports)
+function Avatar({ src, name, size = 42, className = '' }) {
+  const initial = name?.[0]?.toUpperCase() || 'U';
+  
+  if (src) {
+    return (
+      <img 
+        src={src} 
+        alt={name || 'Avatar'} 
+        className={`dash-avatar-img ${className}`}
+        style={{ 
+          width: size, 
+          height: size, 
+          borderRadius: '50%', 
+          objectFit: 'cover',
+          border: '2px solid #e2e8f0'
+        }}
+        onError={(e) => {
+          // Fallback sur initiale si l'image ne charge pas
+          e.target.style.display = 'none';
+          e.target.nextElementSibling?.style?.display?.('flex');
+        }}
+      />
+    );
+  }
+  
+  return (
+    <div 
+      className={`dash-avatar-placeholder ${className}`} 
+      style={{ 
+        width: size, 
+        height: size, 
+        borderRadius: '50%', 
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        color: 'white',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontWeight: 600,
+        fontSize: size * 0.4
+      }}
+    >
+      {initial}
+    </div>
+  );
+}
 const API = 'http://localhost:3000';
 
 const RECRUITER_TIPS = [
@@ -39,11 +84,13 @@ function Sidebar({ user, activePath, navigate, onLogout }) {
         { path: '/dashboard',        icon: '⬡', label: 'Tableau de bord' },
         { path: '/recruiter/post',   icon: '✦', label: 'Publier une offre' },
         { path: '/recruiter/manage', icon: '◈', label: 'Gérer candidatures' },
+        { path: '/profile', icon: '👤', label: 'Mon Profil' },
       ]
     : [
         { path: '/dashboard',                 icon: '⬡', label: 'Tableau de bord' },
         { path: '/candidate/jobs',            icon: '◎', label: "Offres d'emploi" },
         { path: '/candidate/my-applications', icon: '◷', label: 'Mes candidatures' },
+         { path: '/profile', icon: '👤', label: 'Mon Profil' },
       ];
 
   return (
@@ -63,17 +110,16 @@ function Sidebar({ user, activePath, navigate, onLogout }) {
       </div>
 
       {/* User card */}
-      <div className="dash-user-card">
-        <div className="dash-avatar-placeholder" style={{ width: 42, height: 42, fontSize: 16 }}>
-          {name[0].toUpperCase()}
-        </div>
-        <div className="dash-user-info">
-          <div className="dash-user-name">{name}</div>
-          <span className={`dash-role-badge ${isRecruteur ? 'rec' : 'cand'}`}>
-            {isRecruteur ? '🏢 Recruteur' : '🎯 Candidat'}
-          </span>
-        </div>
-      </div>
+     {/* User card */}
+<div className="dash-user-card">
+  <Avatar src={user?.photo_url} name={name} size={42} />
+  <div className="dash-user-info">
+    <div className="dash-user-name">{name}</div>
+    <span className={`dash-role-badge ${isRecruteur ? 'rec' : 'cand'}`}>
+      {isRecruteur ? '🏢 Recruteur' : '🎯 Candidat'}
+    </span>
+  </div>
+</div>
 
       {/* Nav */}
       <nav className="dash-nav">
