@@ -1,7 +1,9 @@
 // src/users/users.entity.ts
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToOne, JoinColumn, OneToMany } from 'typeorm';
 import { CandidateProfile } from '../candidate-profile/candidate-profile.entity';
 import { RecruiterProfile } from '../recruiter-profile/recruiter-profile.entity';
+import { JobOffer } from '../job-offer/job-offer.entity';
+import { JobApplication } from '../job-application/job-application.entity';
 
 @Entity('users')
 export class User {
@@ -50,20 +52,18 @@ export class User {
   @Column({ unique: true })
   email: string;
 
-  @Column({ nullable: true, select: false }) // ⚠️ Ne pas retourner le password par défaut
+  @Column({ nullable: true, select: false })
   password: string;
 
   @Column({ nullable: true })
   social_provider: string;
 
-  // ✅ Champs pour les comptes sociaux (Google/LinkedIn)
   @Column({ nullable: true })
   first_name: string;
 
   @Column({ nullable: true })
   last_name: string;
 
-  // ✅ Relations avec les profils
   @OneToOne(() => CandidateProfile, (profile) => profile.user, { cascade: true })
   @JoinColumn()
   candidatProfile?: CandidateProfile;
@@ -71,4 +71,11 @@ export class User {
   @OneToOne(() => RecruiterProfile, (profile) => profile.user, { cascade: true })
   @JoinColumn()
   recruteurProfile?: RecruiterProfile;
+
+  // 🔗 Nouvelles relations pour les offres
+  @OneToMany(() => JobOffer, (offer) => offer.recruiter)
+  postedOffers?: JobOffer[];
+
+  @OneToMany(() => JobApplication, (app) => app.candidate)
+  applications?: JobApplication[];
 }

@@ -1,6 +1,5 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-
-// ✅ IMPORTS DES PAGES (export default)
+// src/App.js
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Home from './pages/Home/Home';
 import Login from './pages/Auth/Login';
 import Signup from './pages/Auth/Signup';
@@ -8,37 +7,43 @@ import SignupCandidat from './pages/Auth/SignupCandidat';
 import SignupRecruteur from './pages/Auth/SignupRecruteur';
 import VerifyCode from './pages/Auth/VerifyCode';
 import Dashboard from './pages/Dashboard/Dashboard';
-import CompleteProfile from './pages/Auth/CompleteProfile';
 
-// ✅ CSS global
+// 🔹 Pages Recruteur (séparées)
+import PostJob from './pages/Recruiter/PostJob';
+import ManageJobs from './pages/Recruiter/ManageJobs';
+
+// 🔹 Pages Candidat (séparées)
+import FindJobs from './pages/Candidate/FindJobs';
+import ApplyJob from './pages/Candidate/ApplyJob';
+import MyApplications from './pages/Candidate/MyApplications';
+
 import './assets/auth.css';
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* 🏠 Page d'accueil */}
+        {/* 🏠 Pages publiques */}
         <Route path="/" element={<Home />} />
-        
-        {/* 🔐 Authentification */}
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-        
-        {/* 👤 Inscription Candidat */}
         <Route path="/signup/candidat" element={<SignupCandidat />} />
-        
-        {/* 🏢 Inscription Recruteur */}
         <Route path="/signup/recruteur" element={<SignupRecruteur />} />
-        
-        {/* 🔐 Vérification code email */}
         <Route path="/verify/:userId" element={<VerifyCode />} />
         
-        {/* 📝 Complétion profil social */}
-        <Route path="/complete-profile" element={<CompleteProfile />} />
-        
-        {/* 🎯 Dashboard (UNE SEULE FOIS) */}
+        {/* 🎯 Dashboard Hub */}
         <Route path="/dashboard" element={<Dashboard />} />
         
+        {/* 🔹 Recruteur - Pages séparées */}
+        <Route path="/recruiter/post" element={<PostJob />} />
+        <Route path="/recruiter/manage" element={<ManageJobs />} />
+        
+        {/* 🔹 Candidat - Pages séparées */}
+        <Route path="/candidate/jobs" element={<FindJobs />} />
+        <Route path="/candidate/jobs/:id" element={<ApplyJob />} />
+        <Route path="/candidate/my-applications" element={<MyApplications />} />
+        
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </BrowserRouter>
   );

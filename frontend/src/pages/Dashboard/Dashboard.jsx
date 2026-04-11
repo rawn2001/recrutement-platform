@@ -1,486 +1,360 @@
 // src/pages/Dashboard/Dashboard.jsx
 import { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import './Dashboard.css';
+import logo from '../../assets/logo.png';
 
 const API = 'http://localhost:3000';
 
-/* ─── Mini helpers ─────────────────────────────────────────── */
-function Avatar({ src, initials, size = 44 }) {
-  if (src) {
-    return (
-      <img
-        src={src}
-        alt="avatar"
-        className="dash-avatar-img"
-        style={{ width: size, height: size }}
-      />
-    );
-  }
+const RECRUITER_TIPS = [
+  { icon: '✦', title: 'Titre accrocheur', desc: 'Un titre précis augmente les candidatures de 40%.' },
+  { icon: '◎', title: 'Listez les skills', desc: 'Séparez par virgules pour le matching IA.' },
+  { icon: '💰', title: 'Indiquez le salaire', desc: 'Les offres avec salaire reçoivent 3× plus de vues.' },
+  { icon: '📍', title: 'Précisez le lieu', desc: 'Remote / Hybride / Sur site : soyez explicite.' },
+];
+
+const CANDIDATE_TIPS = [
+  { icon: '📄', title: 'CV à jour', desc: 'Un CV récent améliore votre score de matching IA.' },
+  { icon: '🎯', title: 'Postulez ciblé', desc: '5 candidatures ciblées > 20 aléatoires.' },
+  { icon: '✦', title: 'Lettre de motivation', desc: 'Personnalisez chaque lettre pour vous démarquer.' },
+  { icon: '◷', title: 'Suivez vos statuts', desc: 'Relancez après 7 jours sans réponse.' },
+];
+
+const HOT_FIELDS = [
+  { label: 'Développement Web', icon: '💻', demand: 94 },
+  { label: 'Data & Intelligence Artificielle', icon: '🤖', demand: 98 },
+  { label: 'DevOps / Cloud', icon: '☁️', demand: 91 },
+  { label: 'Cybersécurité', icon: '🔒', demand: 89 },
+  { label: 'Design UX/UI', icon: '🎨', demand: 82 },
+  { label: 'Finance & Audit', icon: '📊', demand: 76 },
+];
+
+function Sidebar({ user, activePath, navigate, onLogout }) {
+  const isRecruteur = user?.role === 'recruteur';
+  const name = user?.nom_societe || user?.prenom || user?.first_name || 'Utilisateur';
+
+  const navItems = isRecruteur
+    ? [
+        { path: '/dashboard',        icon: '⬡', label: 'Tableau de bord' },
+        { path: '/recruiter/post',   icon: '✦', label: 'Publier une offre' },
+        { path: '/recruiter/manage', icon: '◈', label: 'Gérer candidatures' },
+      ]
+    : [
+        { path: '/dashboard',                 icon: '⬡', label: 'Tableau de bord' },
+        { path: '/candidate/jobs',            icon: '◎', label: "Offres d'emploi" },
+        { path: '/candidate/my-applications', icon: '◷', label: 'Mes candidatures' },
+      ];
+
   return (
-    <div className="dash-avatar-placeholder" style={{ width: size, height: size, fontSize: size * 0.4 }}>
-      {initials}
+    <aside className="dash-sidebar">
+      {/* Logo */}
+      <div className="dash-sidebar-top">
+        <div className="dash-logo">
+          <img
+            src={logo}
+            alt="TalentSphere"
+            className="dash-logo-img"
+            onError={e => { e.target.style.display = 'none'; document.getElementById('dash-logo-fallback').style.display = 'flex'; }}
+          />
+          <div id="dash-logo-fallback" className="dash-logo-mark" style={{ display: 'none' }}>TS</div>
+          <span className="dash-logo-name">TalentSphere</span>
+        </div>
+      </div>
+
+      {/* User card */}
+      <div className="dash-user-card">
+        <div className="dash-avatar-placeholder" style={{ width: 42, height: 42, fontSize: 16 }}>
+          {name[0].toUpperCase()}
+        </div>
+        <div className="dash-user-info">
+          <div className="dash-user-name">{name}</div>
+          <span className={`dash-role-badge ${isRecruteur ? 'rec' : 'cand'}`}>
+            {isRecruteur ? '🏢 Recruteur' : '🎯 Candidat'}
+          </span>
+        </div>
+      </div>
+
+      {/* Nav */}
+      <nav className="dash-nav">
+        <div className="dash-nav-section">Navigation</div>
+        {navItems.map(item => (
+          <button
+            key={item.path}
+            className={`dash-nav-item ${activePath === item.path ? 'active' : ''}`}
+            onClick={() => navigate(item.path)}
+          >
+            <span className="dash-nav-icon">{item.icon}</span>
+            <span className="dash-nav-label">{item.label}</span>
+          </button>
+        ))}
+      </nav>
+
+      {/* Inline tips in sidebar */}
+      <div className="dash-sidebar-tips">
+        <div className="dash-sidebar-tips-title">
+          💡 {isRecruteur ? 'Conseils recruteur' : 'Conseils candidat'}
+        </div>
+        {(isRecruteur ? RECRUITER_TIPS : CANDIDATE_TIPS).map((tip, i) => (
+          <div className="dash-tip-row" key={i}>
+            <span className="dash-tip-icon">{tip.icon}</span>
+            <div>
+              <div className="dash-tip-title">{tip.title}</div>
+              <div className="dash-tip-desc">{tip.desc}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="dash-sidebar-btm">
+        <button className="dash-logout-btn" onClick={onLogout}>
+          <span>↩</span> Déconnexion
+        </button>
+      </div>
+    </aside>
+  );
+}
+
+function HotFieldsPanel() {
+  return (
+    <div className="dash-hot-fields">
+      <div className="dash-card-header" style={{ padding: '16px 20px 10px' }}>
+        <h3>🔥 Secteurs en demande</h3>
+        <span className="dash-card-action">Tunisie · 2025</span>
+      </div>
+      <div style={{ padding: '4px 20px 18px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {HOT_FIELDS.map((f, i) => (
+          <div key={i} className="dash-field-row">
+            <span className="dash-field-icon">{f.icon}</span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div className="dash-field-label">{f.label}</div>
+              <div className="dash-field-bar-wrap">
+                <div
+                  className="dash-field-bar"
+                  style={{
+                    width: `${f.demand}%`,
+                    animationDelay: `${i * 0.1}s`,
+                    background: f.demand >= 90
+                      ? 'linear-gradient(90deg,#5B5FE8,#9B95FF)'
+                      : f.demand >= 80
+                        ? 'linear-gradient(90deg,#059669,#34D399)'
+                        : 'linear-gradient(90deg,#D97706,#FCD34D)',
+                  }}
+                />
+              </div>
+            </div>
+            <span className="dash-field-pct" style={{
+              color: f.demand >= 90 ? '#5B5FE8' : f.demand >= 80 ? '#059669' : '#D97706'
+            }}>{f.demand}%</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
-function StatCard({ icon, value, label, accent }) {
+function HomeView({ user, stats, navigate }) {
+  const isRecruteur = user?.role === 'recruteur';
+  const name = user?.nom_societe || user?.prenom || user?.first_name || 'Utilisateur';
+
+  const statCards = isRecruteur
+    ? [
+        { icon: '◈', label: 'Offres publiées',     value: stats.offers, accent: '#5B5FE8', accentBg: 'rgba(91,95,232,0.08)' },
+        { icon: '◷', label: 'Candidatures reçues', value: stats.apps,   accent: '#059669', accentBg: 'rgba(5,150,105,0.08)'  },
+        { icon: '◎', label: 'Vues ce mois',        value: '—',          accent: '#0284C7', accentBg: 'rgba(2,132,199,0.08)'  },
+        { icon: '✦', label: 'Taux de réponse',     value: '—',          accent: '#D97706', accentBg: 'rgba(217,119,6,0.08)'  },
+      ]
+    : [
+        { icon: '◷', label: 'Candidatures',       value: stats.apps, accent: '#5B5FE8', accentBg: 'rgba(91,95,232,0.08)' },
+        { icon: '◎', label: 'Offres disponibles', value: '—',        accent: '#059669', accentBg: 'rgba(5,150,105,0.08)' },
+        { icon: '✦', label: 'En attente',         value: '—',        accent: '#D97706', accentBg: 'rgba(217,119,6,0.08)' },
+        { icon: '⬡', label: 'Score moyen',        value: '—',        accent: '#0284C7', accentBg: 'rgba(2,132,199,0.08)' },
+      ];
+
   return (
-    <div className="dash-stat-card" style={{ '--accent': accent }}>
-      <div className="dash-stat-icon">{icon}</div>
-      <div className="dash-stat-value">{value}</div>
-      <div className="dash-stat-label">{label}</div>
+    <div className="dash-home">
+      {/* Welcome Banner */}
+      <div className="dash-welcome-banner">
+        <div className="dash-welcome-dots" />
+        <div className="dash-welcome-left">
+          <div className="dash-avatar-placeholder" style={{ width: 58, height: 58, fontSize: 22, flexShrink: 0 }}>
+            {name[0].toUpperCase()}
+          </div>
+          <div style={{ position: 'relative', zIndex: 1 }}>
+            <h2>Bonjour, {name} 👋</h2>
+            <p>{isRecruteur
+              ? 'Gérez vos offres et trouvez les meilleurs talents.'
+              : "Trouvez l'emploi idéal parmi nos offres."}</p>
+          </div>
+        </div>
+        <div className="dash-welcome-actions">
+          <button className="dash-btn-primary" onClick={() => navigate(isRecruteur ? '/recruiter/post' : '/candidate/jobs')}>
+            {isRecruteur ? '✦ Publier une offre' : '◎ Voir les offres'}
+          </button>
+          <button className="dash-btn-outline" onClick={() => navigate(isRecruteur ? '/recruiter/manage' : '/candidate/my-applications')}>
+            {isRecruteur ? '◈ Gérer candidatures' : '◷ Mes candidatures'}
+          </button>
+        </div>
+      </div>
+
+      {/* Stats row */}
+      <div className="dash-stats-grid">
+        {statCards.map((s, i) => (
+          <div className="dash-stat-card" key={i}
+            style={{ '--accent': s.accent, '--accent-bg': s.accentBg, animationDelay: `${i * 0.07}s` }}>
+            <div className="dash-stat-icon-wrap" style={{ background: s.accentBg }}>
+              <span style={{ color: s.accent, fontSize: 20 }}>{s.icon}</span>
+            </div>
+            <div className="dash-stat-value">{s.value}</div>
+            <div className="dash-stat-label">{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* 2-col layout */}
+      <div className="dash-home-main">
+        {/* Left: cards */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div className="dash-card">
+            <div className="dash-card-header"><h3>⚡ Actions rapides</h3></div>
+            <div className="dash-card-body">
+              <button className="dash-quick-btn primary" onClick={() => navigate(isRecruteur ? '/recruiter/post' : '/candidate/jobs')}>
+                <span>{isRecruteur ? '✦' : '◎'}</span>
+                {isRecruteur ? 'Publier une offre' : 'Parcourir les offres'}
+              </button>
+              <button className="dash-quick-btn" onClick={() => navigate(isRecruteur ? '/recruiter/manage' : '/candidate/my-applications')}>
+                <span>{isRecruteur ? '◈' : '◷'}</span>
+                {isRecruteur ? 'Voir les candidatures' : 'Mes candidatures'}
+              </button>
+            </div>
+          </div>
+
+          <div className="dash-card">
+            <div className="dash-card-header">
+              <h3>{isRecruteur ? '🏢 Espace recruteur' : '🎯 Espace candidat'}</h3>
+            </div>
+            <div className="dash-card-body">
+              <ul style={{ paddingLeft: 18, fontSize: 13.5, color: 'var(--tx-secondary)', lineHeight: 1.9 }}>
+                {isRecruteur ? (
+                  <>
+                    <li>Publiez des offres d'emploi ciblées</li>
+                    <li>Consultez les candidatures reçues</li>
+                    <li>Scores de matching IA automatiques</li>
+                    <li>Acceptez, refusez ou invitez en entretien</li>
+                  </>
+                ) : (
+                  <>
+                    <li>Parcourez toutes les offres disponibles</li>
+                    <li>Postulez avec votre CV (PDF/DOC)</li>
+                    <li>Score IA de compatibilité instantané</li>
+                    <li>Suivez l'état de vos candidatures</li>
+                  </>
+                )}
+              </ul>
+            </div>
+          </div>
+
+          <div className="dash-card">
+            <div className="dash-card-header"><h3>🕐 Activité récente</h3></div>
+            <div className="dash-card-body">
+              <div className="dash-activity-row">
+                <div className="dash-activity-dot">👋</div>
+                <div>
+                  <div className="dash-activity-text">Connexion réussie</div>
+                  <div className="dash-activity-time">À l'instant</div>
+                </div>
+              </div>
+              <div className="dash-activity-row">
+                <div className="dash-activity-dot">⬡</div>
+                <div>
+                  <div className="dash-activity-text">Tableau de bord chargé</div>
+                  <div className="dash-activity-time">Il y a quelques secondes</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right: hot fields + promo */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <HotFieldsPanel />
+
+          <div className="dash-promo-card">
+            <div className="dash-promo-bg" />
+            <div style={{ position: 'relative', zIndex: 1 }}>
+              <div style={{ fontSize: 30, marginBottom: 10 }}>{isRecruteur ? '🚀' : '🌟'}</div>
+              <div className="dash-promo-title">
+                {isRecruteur ? 'Trouvez le talent idéal' : 'Votre prochain emploi vous attend'}
+              </div>
+              <div className="dash-promo-desc">
+                {isRecruteur
+                  ? "Notre IA analyse chaque CV et vous présente les candidats les plus compatibles avec votre offre."
+                  : "Avec le score IA, votre candidature est automatiquement évaluée pour maximiser vos chances."}
+              </div>
+              <button className="dash-promo-btn" onClick={() => navigate(isRecruteur ? '/recruiter/post' : '/candidate/jobs')}>
+                {isRecruteur ? 'Publier maintenant →' : 'Explorer les offres →'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
 
-/* ─── Nav items by role ────────────────────────────────────── */
-const NAV_CANDIDAT = [
-  { icon: '◈', label: 'Tableau de bord', id: 'home'         },
-  { icon: '🔍', label: 'Offres d\'emploi', id: 'jobs'        },
-  { icon: '📄', label: 'Mon CV',            id: 'cv'          },
-  { icon: '📨', label: 'Candidatures',      id: 'applications'},
-  { icon: '🎥', label: 'Entretiens',         id: 'interviews'  },
-  { icon: '👤', label: 'Profil',             id: 'profile'     },
-];
-const NAV_RECRUTEUR = [
-  { icon: '◈', label: 'Tableau de bord',  id: 'home'        },
-  { icon: '➕', label: 'Publier offre',     id: 'post'        },
-  { icon: '💼', label: 'Mes offres',        id: 'jobs'        },
-  { icon: '👥', label: 'Candidatures',      id: 'applications'},
-  { icon: '🎥', label: 'Entretiens',         id: 'interviews'  },
-  { icon: '👤', label: 'Profil entreprise', id: 'profile'     },
-];
-
-/* ─── Main Component ───────────────────────────────────────── */
 export default function Dashboard() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const [user, setUser]       = useState(null);
+  const location = useLocation();
+  const [user, setUser] = useState(null);
+  const [stats, setStats] = useState({ offers: 0, apps: 0 });
   const [loading, setLoading] = useState(true);
-  const [activeNav, setNav]   = useState('home');
-  const [collapsed, setCollapsed] = useState(false);
 
-  /* ── Auth logic (unchanged from original) ── */
+  const handleLogout = () => { localStorage.clear(); navigate('/login'); };
+
   useEffect(() => {
-    const tokenFromUrl = searchParams.get('token');
-    if (tokenFromUrl) {
-      localStorage.setItem('token', tokenFromUrl);
-      navigate('/dashboard', { replace: true });
-    }
-    const token = tokenFromUrl || localStorage.getItem('token');
+    const token = localStorage.getItem('token');
     if (!token) { navigate('/login'); return; }
 
     axios.get(`${API}/auth/me`, { headers: { Authorization: `Bearer ${token}` } })
       .then(res => {
         setUser(res.data);
-        localStorage.setItem('user', JSON.stringify(res.data));
+        if (res.data.role === 'recruteur') {
+          axios.get(`${API}/job-offers/my-offers`, { headers: { Authorization: `Bearer ${token}` } })
+            .then(r => setStats({ offers: r.data.length, apps: 0 }))
+            .finally(() => setLoading(false));
+        } else {
+          axios.get(`${API}/job-applications/my-applications`, { headers: { Authorization: `Bearer ${token}` } })
+            .then(r => setStats({ offers: 0, apps: r.data.length }))
+            .finally(() => setLoading(false));
+        }
       })
-      .catch(() => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        navigate('/login');
-      })
-      .finally(() => setLoading(false));
-  }, [navigate, searchParams]);
+      .catch(() => { localStorage.clear(); navigate('/login'); });
+  }, [navigate]);
 
-  /* ── Loading ── */
-  if (loading) {
-    return (
-      <div className="dash-loading">
-        <div className="dash-spinner" />
-        <span>Chargement de TalentSphere…</span>
-      </div>
-    );
-  }
-
+  if (loading) return (
+    <div className="dash-loading">
+      <div className="dash-spinner" />
+      <span>Chargement de votre espace</span>
+    </div>
+  );
   if (!user) return null;
 
-  /* ── Derived display values ── */
-  const isRecruteur = user.role === 'recruteur';
-  const NAV = isRecruteur ? NAV_RECRUTEUR : NAV_CANDIDAT;
+  const name = user.nom_societe || user.prenom || user.first_name || 'Utilisateur';
 
-  const displayName = user.nom_societe
-    ? user.nom_societe
-    : user.prenom
-      ? `${user.prenom} ${user.nom || ''}`.trim()
-      : user.first_name
-        ? `${user.first_name} ${user.last_name || ''}`.trim()
-        : 'Utilisateur';
-
-  const displayPhoto = user.photo_url || user.photo || null;
-  const initials = displayName
-    .split(' ')
-    .map(w => w[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
-
-  const providerIcon =
-    user.social_provider === 'google'   ? '🔵' :
-    user.social_provider === 'linkedin' ? '🔷' : '📧';
-
-  /* ── Logout ── */
-  const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    navigate('/login');
-  };
-
-  /* ── RENDER ── */
   return (
-    <div className={`dash-layout ${collapsed ? 'dash-collapsed' : ''}`}>
-
-      {/* ════ SIDEBAR ════ */}
-      <aside className="dash-sidebar">
-        {/* Logo */}
-        <div className="dash-sidebar-top">
-          <div className="dash-logo">
-            <span className="dash-logo-mark">TS</span>
-            {!collapsed && <span className="dash-logo-name">TalentSphere</span>}
-          </div>
-          <button
-            className="dash-collapse-btn"
-            onClick={() => setCollapsed(p => !p)}
-            title={collapsed ? 'Déplier' : 'Réduire'}
-          >
-            {collapsed ? '→' : '←'}
-          </button>
-        </div>
-
-        {/* User card */}
-        {!collapsed && (
-          <div className="dash-user-card">
-            <Avatar src={displayPhoto} initials={initials} size={40} />
-            <div className="dash-user-info">
-              <div className="dash-user-name">{displayName}</div>
-              <span className={`dash-role-badge ${isRecruteur ? 'rec' : 'cand'}`}>
-                {isRecruteur ? '🏢 Recruteur' : '🎯 Candidat'}
-              </span>
-            </div>
-          </div>
-        )}
-
-        {/* Navigation */}
-        <nav className="dash-nav">
-          {NAV.map(item => (
-            <button
-              key={item.id}
-              className={`dash-nav-item ${activeNav === item.id ? 'active' : ''}`}
-              onClick={() => setNav(item.id)}
-              title={collapsed ? item.label : ''}
-            >
-              <span className="dash-nav-icon">{item.icon}</span>
-              {!collapsed && <span className="dash-nav-label">{item.label}</span>}
-              {!collapsed && activeNav === item.id && <span className="dash-nav-dot" />}
-            </button>
-          ))}
-        </nav>
-
-        {/* Bottom */}
-        <div className="dash-sidebar-btm">
-          {!collapsed && (
-            <div className="dash-upgrade-card">
-              <div className="dash-upgrade-title">✨ Plan Gratuit</div>
-              <div className="dash-upgrade-desc">Passez Pro pour débloquer toutes les fonctionnalités</div>
-              <button className="dash-upgrade-btn">Passer Pro →</button>
-            </div>
-          )}
-          <button className="dash-logout-btn" onClick={logout} title="Déconnexion">
-            <span>🚪</span>
-            {!collapsed && <span>Déconnexion</span>}
-          </button>
-        </div>
-      </aside>
-
-      {/* ════ MAIN ════ */}
+    <div className="dash-layout">
+      <Sidebar user={user} activePath={location.pathname} navigate={navigate} onLogout={handleLogout} />
       <div className="dash-main">
-
-        {/* ── Topbar ── */}
         <header className="dash-topbar">
-          <div className="dash-topbar-left">
-            <h1 className="dash-page-title">
-              {NAV.find(n => n.id === activeNav)?.label || 'Tableau de bord'}
-            </h1>
-          </div>
+          <div className="dash-page-title">Tableau de bord</div>
           <div className="dash-topbar-right">
             <button className="dash-topbar-btn" title="Notifications">🔔</button>
-            <button className="dash-topbar-btn" title="Paramètres" onClick={() => setNav('profile')}>⚙</button>
-            <button className="dash-topbar-avatar" onClick={() => setNav('profile')} title="Mon profil">
-              {displayPhoto
-                ? <img src={displayPhoto} alt={displayName} />
-                : <span>{initials}</span>
-              }
-            </button>
+            <div className="dash-topbar-avatar">{name[0].toUpperCase()}</div>
           </div>
         </header>
-
-        {/* ── Content ── */}
         <main className="dash-content">
-
-          {/* ────────────── HOME VIEW ────────────── */}
-          {activeNav === 'home' && (
-            <div className="dash-home">
-
-              {/* Welcome banner */}
-              <div className="dash-welcome-banner">
-                <div className="dash-welcome-orb" />
-                <div className="dash-welcome-left">
-                  <Avatar src={displayPhoto} initials={initials} size={64} />
-                  <div>
-                    <h2>Bonjour, <span className="dash-gold">{displayName}</span> 👋</h2>
-                    <p>
-                      {isRecruteur
-                        ? 'Gérez vos offres et découvrez les meilleurs talents grâce à l\'IA.'
-                        : 'Trouvez votre emploi idéal. Votre prochaine opportunité est ici.'}
-                    </p>
-                  </div>
-                </div>
-                <div className="dash-welcome-actions">
-                  <button
-                    className="dash-btn-gold"
-                    onClick={() => setNav(isRecruteur ? 'post' : 'cv')}
-                  >
-                    {isRecruteur ? '➕ Publier une offre' : '📄 Analyser mon CV'}
-                  </button>
-                  <button className="dash-btn-ghost" onClick={() => setNav('profile')}>
-                    👤 Mon profil
-                  </button>
-                </div>
-              </div>
-
-              {/* Stats */}
-              <div className="dash-stats-grid">
-                {isRecruteur ? (<>
-                  <StatCard icon="💼" value="4"  label="Offres actives"      accent="var(--gold)" />
-                  <StatCard icon="👥" value="38" label="Candidatures reçues" accent="var(--teal)" />
-                  <StatCard icon="🎥" value="6"  label="Entretiens planifiés" accent="var(--rose)" />
-                  <StatCard icon="✅" value="11" label="Recrutements réussis" accent="var(--gold)" />
-                </>) : (<>
-                  <StatCard icon="📨" value="7"   label="Candidatures"    accent="var(--gold)" />
-                  <StatCard icon="🎯" value="84%" label="Score CV IA"      accent="var(--teal)" />
-                  <StatCard icon="🎥" value="3"   label="Entretiens"       accent="var(--rose)" />
-                  <StatCard icon="👁" value="42"  label="Vues du profil"   accent="var(--gold)" />
-                </>)}
-              </div>
-
-              {/* Grid */}
-              <div className="dash-home-grid">
-
-                {/* Recent activity */}
-                <div className="dash-card">
-                  <div className="dash-card-header">
-                    <h3>Activité récente</h3>
-                  </div>
-                  <div className="dash-card-body">
-                    {[
-                      { icon:'✅', text: isRecruteur ? 'Offre "Dev React" publiée'         : 'Candidature envoyée chez TechCorp TN', time:'Il y a 2h',  c:'var(--teal)' },
-                      { icon:'📧', text: isRecruteur ? 'Nouveau CV reçu — Sarra B.'         : 'Email de confirmation reçu',           time:'Il y a 5h',  c:'var(--gold)' },
-                      { icon:'🎥', text: isRecruteur ? 'Entretien planifié avec Mehdi K.'   : 'Entretien planifié — 15 jan à 14h',    time:'Hier',        c:'var(--rose)' },
-                      { icon:'🔔', text: isRecruteur ? '3 nouvelles candidatures'            : 'Profil consulté 5 fois cette semaine', time:'Il y a 2j',  c:'var(--gold)' },
-                    ].map((a, i) => (
-                      <div className="dash-activity-row" key={i}>
-                        <div className="dash-activity-dot" style={{ background: a.c }}>{a.icon}</div>
-                        <div>
-                          <div className="dash-activity-text">{a.text}</div>
-                          <div className="dash-activity-time">{a.time}</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Quick actions */}
-                <div className="dash-card">
-                  <div className="dash-card-header"><h3>Actions rapides</h3></div>
-                  <div className="dash-card-body">
-                    {(isRecruteur ? [
-                      { icon:'➕', l:'Publier une offre',     id:'post'         },
-                      { icon:'👥', l:'Voir candidatures',     id:'applications' },
-                      { icon:'📅', l:'Planifier un entretien',id:'interviews'   },
-                      { icon:'💼', l:'Mes offres actives',    id:'jobs'         },
-                    ] : [
-                      { icon:'🔍', l:'Chercher un emploi',    id:'jobs'         },
-                      { icon:'📄', l:'Analyser mon CV',       id:'cv'           },
-                      { icon:'👤', l:'Compléter mon profil',  id:'profile'      },
-                      { icon:'🎥', l:'Voir mes entretiens',   id:'interviews'   },
-                    ]).map((a, i) => (
-                      <button
-                        key={i}
-                        className={`dash-quick-btn ${i === 0 ? 'primary' : ''}`}
-                        onClick={() => setNav(a.id)}
-                      >
-                        <span>{a.icon}</span>{a.l}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Upcoming interviews */}
-                <div className="dash-card">
-                  <div className="dash-card-header">
-                    <h3>Entretiens à venir</h3>
-                    <button className="dash-card-action" onClick={() => setNav('interviews')}>Voir tout →</button>
-                  </div>
-                  <div className="dash-card-body">
-                    {[
-                      { name: isRecruteur ? 'Sarra Belhadj' : 'TechCorp TN', date:'15 Jan · 14:00', meet:'https://meet.google.com/abc-def-ghi' },
-                      { name: isRecruteur ? 'Mehdi Khelifi'  : 'DataInc',    date:'17 Jan · 10:30', meet:'https://meet.google.com/xyz-uvw-xyz' },
-                    ].map((iv, i) => (
-                      <div className="dash-iv-row" key={i}>
-                        <span className="dash-iv-icon">🎥</span>
-                        <div className="dash-iv-info">
-                          <div className="dash-iv-name">{iv.name}</div>
-                          <div className="dash-iv-date">📅 {iv.date}</div>
-                        </div>
-                        <a href={iv.meet} target="_blank" rel="noopener noreferrer" className="dash-iv-btn">
-                          Rejoindre
-                        </a>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ────────────── PROFILE VIEW ────────────── */}
-          {activeNav === 'profile' && (
-            <div className="dash-profile-view">
-              {/* Hero */}
-              <div className="dash-profile-hero">
-                <div className="dash-profile-hero-bg" />
-                <div className="dash-profile-hero-avatar">
-                  <Avatar src={displayPhoto} initials={initials} size={80} />
-                </div>
-                <div className="dash-profile-hero-info">
-                  <h2>{displayName}</h2>
-                  <p>
-                    {isRecruteur
-                      ? `${user.poste || 'Recruteur'} · ${user.nom_societe || ''}`
-                      : user.profession || user.email}
-                  </p>
-                  <span className={`dash-role-badge ${isRecruteur ? 'rec' : 'cand'}`}>
-                    {isRecruteur ? '🏢 Recruteur' : '🎯 Candidat'}
-                  </span>
-                </div>
-              </div>
-
-              {/* Info cards */}
-              <div className="dash-profile-grid">
-                <div className="dash-card">
-                  <div className="dash-card-header">
-                    <h3>{isRecruteur ? 'Informations entreprise' : 'Informations personnelles'}</h3>
-                  </div>
-                  <div className="dash-card-body">
-                    <div className="dash-info-grid">
-                      {isRecruteur ? (<>
-                        <InfoRow icon="🏢" label="Société"     value={user.nom_societe} />
-                        <InfoRow icon="✉"  label="Email"       value={user.email} verified={user.email_verified} />
-                        <InfoRow icon="💼" label="Poste"       value={user.poste} />
-                        <InfoRow icon="◈"  label="Domaine"     value={user.domaine} />
-                        <InfoRow icon="📍" label="Pays"        value={user.pays_societe} />
-                        <InfoRow icon="📱" label="Téléphone"   value={user.phone_societe ? `${user.phone_societe_code || ''} ${user.phone_societe}` : null} />
-                        <InfoRow icon="📅" label="Fondée en"   value={user.date_creation_societe} />
-                      </>) : (<>
-                        <InfoRow icon="👤" label="Prénom"      value={user.prenom || user.first_name} />
-                        <InfoRow icon="👤" label="Nom"         value={user.nom    || user.last_name} />
-                        <InfoRow icon="✉"  label="Email"       value={user.email} verified={user.email_verified} />
-                        <InfoRow icon="♂"  label="Genre"       value={user.genre} />
-                        <InfoRow icon="🎂" label="Naissance"   value={user.date_naissance} />
-                        <InfoRow icon="📍" label="Pays"        value={user.pays} />
-                        <InfoRow icon="📱" label="Téléphone"   value={user.phone ? `${user.phone_code || ''} ${user.phone}` : null} />
-                        <InfoRow icon="💼" label="Profession"  value={user.profession} />
-                      </>)}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="dash-card">
-                  <div className="dash-card-header"><h3>Compte</h3></div>
-                  <div className="dash-card-body">
-                    <div className="dash-account-rows">
-                      <div className="dash-account-row">
-                        <span>📧 Email</span>
-                        <span className={user.email_verified ? 'dash-ok' : 'dash-warn'}>
-                          {user.email_verified ? '✓ Vérifié' : '⚠ Non vérifié'}
-                        </span>
-                      </div>
-                      <div className="dash-account-row">
-                        <span>📱 Téléphone</span>
-                        <span className={user.phone_verified ? 'dash-ok' : 'dash-warn'}>
-                          {user.phone_verified ? '✓ Vérifié' : '⚠ Non vérifié'}
-                        </span>
-                      </div>
-                      <div className="dash-account-row">
-                        <span>🔑 Connexion via</span>
-                        <span>{providerIcon} {user.social_provider || 'Email'}</span>
-                      </div>
-                      <div className="dash-account-row">
-                        <span>🗓 Membre depuis</span>
-                        <span>
-                          {user.created_at
-                            ? new Date(user.created_at).toLocaleDateString('fr-FR', { month:'long', year:'numeric' })
-                            : '—'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Debug */}
-              <details className="dash-debug">
-                <summary>🐛 Debug — données brutes</summary>
-                <pre>{JSON.stringify(user, null, 2)}</pre>
-              </details>
-            </div>
-          )}
-
-          {/* ────────────── PLACEHOLDER VIEWS ────────────── */}
-          {activeNav !== 'home' && activeNav !== 'profile' && (
-            <PlaceholderView id={activeNav} isRecruteur={isRecruteur} onNav={setNav} />
-          )}
-
+          <HomeView user={user} stats={stats} navigate={navigate} />
         </main>
-      </div>
-    </div>
-  );
-}
-
-/* ─── Info row helper ────────────────────────────────────────── */
-function InfoRow({ icon, label, value, verified }) {
-  return (
-    <div className="dash-info-row">
-      <span className="dash-info-icon">{icon}</span>
-      <span className="dash-info-label">{label}</span>
-      <span className="dash-info-value">
-        {value || <em>—</em>}
-        {verified && <span className="dash-verified">✓ Vérifié</span>}
-      </span>
-    </div>
-  );
-}
-
-/* ─── Placeholder for unbuilt pages ─────────────────────────── */
-function PlaceholderView({ id, isRecruteur, onNav }) {
-  const MAP = {
-    jobs:         { icon:'💼', title:'Offres d\'emploi',   desc:'Parcourez les offres et postulez selon votre score de matching IA.' },
-    post:         { icon:'➕', title:'Publier une offre',   desc:'Créez une nouvelle offre et laissez l\'IA scorer les candidats.' },
-    cv:           { icon:'📄', title:'Analyse CV',          desc:'Uploadez votre CV pour obtenir votre score IA et des recommandations.' },
-    applications: { icon:'📨', title:'Candidatures',        desc: isRecruteur ? 'Gérez les candidatures reçues pour vos offres.' : 'Suivez l\'état de vos candidatures en temps réel.' },
-    interviews:   { icon:'🎥', title:'Entretiens Vidéo',   desc:'Vos entretiens planifiés avec analyse IA des émotions, voix et gestes.' },
-  };
-  const page = MAP[id] || { icon:'◈', title:'Page', desc:'En construction.' };
-
-  return (
-    <div className="dash-placeholder">
-      <div className="dash-placeholder-inner">
-        <div className="dash-placeholder-icon">{page.icon}</div>
-        <h2>{page.title}</h2>
-        <p>{page.desc}</p>
-        <button className="dash-btn-gold" onClick={() => onNav('home')}>← Retour au dashboard</button>
       </div>
     </div>
   );
