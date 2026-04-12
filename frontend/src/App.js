@@ -17,7 +17,7 @@ import ManageJobs from './pages/Recruiter/ManageJobs';
 import FindJobs from './pages/Candidate/FindJobs';
 import ApplyJob from './pages/Candidate/ApplyJob';
 import MyApplications from './pages/Candidate/MyApplications';
-
+import CompleteProfile from './pages/Auth/CompleteProfile';
 import './assets/auth.css';
 
 export default function App() {
@@ -31,7 +31,7 @@ export default function App() {
         <Route path="/signup/candidat" element={<SignupCandidat />} />
         <Route path="/signup/recruteur" element={<SignupRecruteur />} />
         <Route path="/verify/:userId" element={<VerifyCode />} />
-        
+        <Route path="/complete-profile" element={<CompleteProfile />} />
         {/* 🎯 Dashboard Hub */}
         <Route path="/dashboard" element={<Dashboard />} />
         

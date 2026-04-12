@@ -223,10 +223,8 @@ function HomeView({ user, stats, navigate }) {
       <div className="dash-welcome-banner">
         <div className="dash-welcome-dots" />
         <div className="dash-welcome-left">
-          <div className="dash-avatar-placeholder" style={{ width: 58, height: 58, fontSize: 22, flexShrink: 0 }}>
-            {name[0].toUpperCase()}
-          </div>
-          <div style={{ position: 'relative', zIndex: 1 }}>
+  <Avatar src={user?.photo_url} name={name} size={58} />
+  <div style={{ position: 'relative', zIndex: 1 }}>
             <h2>Bonjour, {name} 👋</h2>
             <p>{isRecruteur
               ? 'Gérez vos offres et trouvez les meilleurs talents.'

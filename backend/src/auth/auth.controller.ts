@@ -4,6 +4,7 @@ import { AuthService } from './auth.service';
 import { Response } from 'express';
 import { UpdateProfileDto } from '../auth/dto/update-profile.dto';
 import { UsersService } from '../users/users.service';
+import { ChangePasswordDto } from './dto/change-password.dto';
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService,
@@ -19,6 +20,11 @@ export class AuthController {
   async login(@Body() body: { email: string; password: string }) {
     return this.authService.login(body.email, body.password);
   }
+  @Put('change-password')
+@UseGuards(AuthGuard('jwt'))
+async changePassword(@Req() req, @Body() changePasswordDto: ChangePasswordDto) {
+  return this.usersService.changePassword(req.user.id, changePasswordDto);
+}
 @Put('profile')
 @UseGuards(AuthGuard('jwt'))
 async updateProfile(@Req() req, @Body() updateProfileDto: UpdateProfileDto) {

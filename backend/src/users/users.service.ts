@@ -1,10 +1,11 @@
-﻿import { Injectable ,NotFoundException } from '@nestjs/common';
+﻿import { Injectable ,NotFoundException , BadRequestException} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './users.entity';
 import { CandidateProfile } from '../candidate-profile/candidate-profile.entity';
 import { RecruiterProfile } from '../recruiter-profile/recruiter-profile.entity';
-
+import { ChangePasswordDto } from '../auth/dto/change-password.dto';
+import * as bcrypt from 'bcrypt';
 @Injectable()
 export class UsersService {
   constructor(
@@ -123,5 +124,54 @@ findOneByEmail(email: string): Promise<User | null> {
     where: { id: userId },
     relations: ['candidatProfile', 'recruteurProfile']
   });
+  
+}
+// À la fin du fichier, après updateProfile()
+// ✅ ASSURE-TOI QUE CE DTO EST IMPORTÉ EN HAUT DU FICHIER
+
+
+// ... dans ta classe UsersService, remplace l'ancienne méthode par celle-ci :
+
+async changePassword(userId: number, data: ChangePasswordDto): Promise<{ message: string }> {
+  const user = await this.usersRepo.findOne({ 
+    where: { id: userId },
+    select: ['id', 'email', 'password', 'social_provider']
+  });
+  
+  if (!user) throw new NotFoundException('Utilisateur non trouvé');
+  
+  // ❌ Bloquer comptes sociaux
+  if (user.social_provider) {
+    throw new BadRequestException('Les comptes sociaux ne peuvent pas changer de mot de passe. Connectez-vous avec votre provider.');
+  }
+  
+  // 🔍 Vérifier mot de passe actuel
+  if (!user.password) {
+    throw new BadRequestException('Aucun mot de passe défini pour ce compte.');
+  }
+  
+  const isMatch = await bcrypt.compare(data.currentPassword, user.password);
+  if (!isMatch) {
+    throw new BadRequestException('Mot de passe actuel incorrect.');
+  }
+  
+  // ✅ Valider nouveau mot de passe
+  if (data.newPassword.length < 6) {
+    throw new BadRequestException('Le nouveau mot de passe doit contenir au moins 6 caractères.');
+  }
+  
+  if (data.newPassword !== data.confirmNewPassword) {
+    throw new BadRequestException('Les nouveaux mots de passe ne correspondent pas.');
+  }
+  
+  if (await bcrypt.compare(data.newPassword, user.password)) {
+    throw new BadRequestException('Le nouveau mot de passe doit être différent de l\'ancien.');
+  }
+  
+  // 🔐 Hasher et sauvegarder
+  const hashed = await bcrypt.hash(data.newPassword, 10);
+  await this.usersRepo.update(userId, { password: hashed });
+  
+  return { message: 'Mot de passe mis à jour avec succès.' };
 }
 }

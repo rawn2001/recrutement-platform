@@ -12,7 +12,12 @@ export default function Profile() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
   const [form, setForm] = useState({});
-
+const [passwordForm, setPasswordForm] = useState({
+  currentPassword: '',
+  newPassword: '',
+  confirmNewPassword: ''
+});
+const [showPasswordSection, setShowPasswordSection] = useState(false);
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) { navigate('/login'); return; }
@@ -55,7 +60,29 @@ export default function Profile() {
   }, [navigate]);
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+const handlePasswordChange = (e) => {
+  setPasswordForm({ ...passwordForm, [e.target.name]: e.target.value });
+};
 
+const handlePasswordSubmit = async (e) => {
+  e.preventDefault();
+  setSaving(true); setMessage({ type: '', text: '' });
+  
+  try {
+    const token = localStorage.getItem('token');
+    await axios.put(`${API}/auth/change-password`, passwordForm, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    
+    setMessage({ type: 'success', text: '✅ Mot de passe mis à jour avec succès !' });
+    setPasswordForm({ currentPassword: '', newPassword: '', confirmNewPassword: '' });
+    setShowPasswordSection(false);
+  } catch (err) {
+    setMessage({ type: 'error', text: '❌ ' + (err.response?.data?.message || 'Erreur changement mot de passe') });
+  } finally {
+    setSaving(false);
+  }
+};
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true); setMessage({ type: '', text: '' });
@@ -125,7 +152,85 @@ export default function Profile() {
               </div>
             </>
           )}
-          
+          {/* ═══════════════════════════════════════════════════
+    🔐 SECTION CHANGER MOT DE PASSE
+   ═══════════════════════════════════════════════════ */}
+<div style={{ marginTop: 32, paddingTop: 24, borderTop: '1px solid #e2e8f0' }}>
+  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+    <h3>🔐 Sécurité</h3>
+    <button 
+      type="button"
+      onClick={() => setShowPasswordSection(!showPasswordSection)}
+      style={{
+        background: 'none', border: 'none', color: '#6366f1', 
+        cursor: 'pointer', fontSize: 14, fontWeight: 500
+      }}
+    >
+      {showPasswordSection ? 'Masquer ▼' : 'Changer mot de passe ▶'}
+    </button>
+  </div>
+  
+  {showPasswordSection && (
+    <div style={{ background: '#f8fafc', padding: 16, borderRadius: 8 }}>
+      {user?.social_provider && (
+        <div style={{ 
+          background: '#fef3c7', color: '#92400e', 
+          padding: 12, borderRadius: 6, marginBottom: 12, fontSize: 13 
+        }}>
+          ⚠️ Vous êtes connecté via {user.social_provider === 'google' ? 'Google' : 'LinkedIn'}. 
+          La gestion du mot de passe se fait depuis votre compte {user.social_provider}.
+        </div>
+      )}
+      
+      {!user?.social_provider && (
+        <form onSubmit={handlePasswordSubmit}>
+          <div className="field" style={{ marginBottom: 12 }}>
+            <label>Mot de passe actuel *</label>
+            <input 
+              type="password" 
+              name="currentPassword" 
+              value={passwordForm.currentPassword} 
+              onChange={handlePasswordChange} 
+              required 
+              style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: 8 }}
+            />
+          </div>
+          <div className="field" style={{ marginBottom: 12 }}>
+            <label>Nouveau mot de passe * (min. 6 caractères)</label>
+            <input 
+              type="password" 
+              name="newPassword" 
+              value={passwordForm.newPassword} 
+              onChange={handlePasswordChange} 
+              required 
+              minLength={6}
+              style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: 8 }}
+            />
+          </div>
+          <div className="field" style={{ marginBottom: 16 }}>
+            <label>Confirmer le nouveau mot de passe *</label>
+            <input 
+              type="password" 
+              name="confirmNewPassword" 
+              value={passwordForm.confirmNewPassword} 
+              onChange={handlePasswordChange} 
+              required 
+              style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: 8 }}
+            />
+          </div>
+          <button 
+            type="submit" 
+            className="btn-primary" 
+            disabled={saving}
+            style={{ background: '#dc2626' }}
+          >
+            {saving ? 'Mise à jour...' : '🔐 Changer mon mot de passe'}
+          </button>
+        </form>
+      )}
+    </div>
+  )}
+</div>
           <button type="submit" className="btn-primary" disabled={saving}>
             {saving ? 'Sauvegarde...' : '💾 Enregistrer les modifications'}
           </button>
