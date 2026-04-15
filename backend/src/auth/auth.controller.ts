@@ -10,9 +10,10 @@ import {
   Param, 
   Put 
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
-import { AuthService } from './auth.service';
+import { AuthGuard  } from '@nestjs/passport';
+import { AuthService  } from './auth.service';
 import { Response } from 'express';
+import {  BadRequestException } from '@nestjs/common'; 
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { UsersService } from '../users/users.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
@@ -67,20 +68,48 @@ async updateProfile(@Req() req, @Body() data: any) {  // ← "any" au lieu du DT
     return this.usersService.changePassword(req.user.id, changePasswordDto);
   }
 
-  @Post('forgot-password')
-  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
-    return this.usersService.requestPasswordReset(forgotPasswordDto.email);
+ @Post('forgot-password')
+  async forgotPassword(@Body() body: Record<string, any>) {
+    console.log('📧 [CONTROLLER] forgot-password body:', body);
+    return this.usersService.requestPasswordReset(body.email);
   }
 
   @Post('reset-password')
-  async resetPassword(@Body() verifyResetCodeDto: VerifyResetCodeDto) {
+  async resetPassword(@Body() body: Record<string, any>) {
+    console.log('🔐 [CONTROLLER] reset-password body:', body);
+    console.log('🔐 [CONTROLLER] body.email:', body.email, '| type:', typeof body.email);
+    console.log('🔐 [CONTROLLER] body.code:', body.code, '| type:', typeof body.code);
+    
     return this.usersService.verifyResetCodeAndChangePassword(
-      verifyResetCodeDto.email,
-      verifyResetCodeDto.code,
-      verifyResetCodeDto.newPassword,
-      verifyResetCodeDto.confirmNewPassword
+      body.email,
+      body.code,
+      body.newPassword,
+      body.confirmNewPassword
     );
   }
+  // ✅ Nouvelle route pour vérifier le code (sans changer le mot de passe)
+@Post('verify-reset-code')
+async verifyResetCode(@Body() body: Record<string, any>) {
+  console.log('🔐 [CONTROLLER] verify-reset-code body:', body);
+  
+  const user = await this.usersService.usersRepo.findOne({
+    where: { email: body.email },
+    select: ['id', 'email', 'verification_code', 'verification_code_expires', 'social_provider']
+  });
+  
+  if (!user) throw new BadRequestException('Code invalide');
+  if (user.social_provider && ['google', 'linkedin'].includes(user.social_provider.toLowerCase())) {
+    throw new BadRequestException('Les comptes sociaux ne peuvent pas réinitialiser leur mot de passe');
+  }
+  if (user.verification_code !== body.code) {
+    throw new BadRequestException('Code de vérification incorrect');
+  }
+  if (user.verification_code_expires && new Date() > user.verification_code_expires) {
+    throw new BadRequestException('Code expiré. Demandez un nouveau code.');
+  }
+  
+  return { message: 'Code valide' };
+}
 
   // ═══════════════════════════════════════════════════
   // 🔵 Google OAuth

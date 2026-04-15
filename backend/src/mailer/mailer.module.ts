@@ -1,9 +1,10 @@
 // src/mailer/mailer.module.ts
-import { Module, Global } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { Module } from '@nestjs/common';
 import { MailerModule } from '@nestjs-modules/mailer';
+// ✅ NOUVEL IMPORT (chemin public) :
+import { HandlebarsAdapter } from '@nestjs-modules/mailer/adapters/handlebars.adapter';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
-@Global()  // 🔑 C'EST ÇA LA CLÉ ! Module global
 @Module({
   imports: [
     MailerModule.forRootAsync({
@@ -11,20 +12,27 @@ import { MailerModule } from '@nestjs-modules/mailer';
       useFactory: async (configService: ConfigService) => ({
         transport: {
           host: configService.get('MAIL_HOST'),
-          port: configService.get('MAIL_PORT'),
-          secure: configService.get('MAIL_PORT') === '465',
+          port: Number(configService.get('MAIL_PORT')),
+          secure: true,
           auth: {
             user: configService.get('MAIL_USER'),
             pass: configService.get('MAIL_PASS'),
           },
         },
         defaults: {
-          from: `"TalentSphere" <${configService.get('MAIL_FROM')}>`,
+          // ✅ SEULEMENT "from" - PAS de "to" ou "bcc" !
+          from: `"TalentSphere" <${configService.get('MAIL_USER')}>`,
         },
+        template: {
+          dir: process.cwd() + '/templates',
+          adapter: new HandlebarsAdapter(),
+          options: { strict: true },
+        },
+        preview: false,
       }),
       inject: [ConfigService],
     }),
   ],
-  exports: [MailerModule],  // ✅ Exporter pour utilisation dans d'autres modules
+  exports: [MailerModule],
 })
 export class MailerConfigModule {}

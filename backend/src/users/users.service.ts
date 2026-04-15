@@ -12,9 +12,9 @@ import { MailerService } from '@nestjs-modules/mailer';
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectRepository(User) private usersRepo: Repository<User>,
     @InjectRepository(CandidateProfile) private candidatRepo: Repository<CandidateProfile>,
     @InjectRepository(RecruiterProfile) private recruteurRepo: Repository<RecruiterProfile>,
+     @InjectRepository(User) public usersRepo: Repository<User>,
     private mailerService: MailerService,
   ) {}
 
@@ -126,65 +126,104 @@ export class UsersService {
     await this.usersRepo.update(userId, { password: hashed });
     return { message: 'Mot de passe mis à jour avec succès.' };
   }
+async requestPasswordReset(email: string): Promise<{ message: string }> {
+  console.log('📧 requestPasswordReset reçu:', email);
+  
+  const safeResponse = { message: 'Si cet email existe, vous recevrez un code.' };
+  
+  if (!email || !email.includes('@')) return safeResponse;
 
-  async requestPasswordReset(email: string): Promise<{ message: string }> {
-    const user = await this.usersRepo.findOne({ where: { email } });
-    if (!user) return { message: 'Si cet email existe, vous recevrez un code de vérification.' };
+  // ✅ Recherche EXACTE de l'utilisateur
+  const user = await this.usersRepo.findOne({ 
+    where: { email: email.toLowerCase().trim() } 
+  });
+  
+  console.log('📧 Utilisateur trouvé en base:', user ? `ID ${user.id} (${user.email})` : 'AUCUN');
+  if (!user) return safeResponse;
 
-    const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
-    const resetCodeExpires = new Date(Date.now() + 10 * 60 * 1000);
+  const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+  const resetCodeExpires = new Date(Date.now() + 10 * 60 * 1000);
 
-    await this.usersRepo.update(user.id, {
-      verification_code: resetCode,
-      verification_type: 'password_reset',
-      verification_code_expires: resetCodeExpires,
-    });
+  await this.usersRepo.update(user.id, {
+    verification_code: resetCode,
+    verification_type: 'password_reset',
+    verification_code_expires: resetCodeExpires,
+  });
 
-    await this.sendResetCodeEmail(user.email, resetCode);
-    return { message: 'Si cet email existe, vous recevrez un code de vérification.' };
+  // ✅ ENVOI À user.email (PAS à process.env.MAIL_USER !)
+  console.log('📤 [MAILER] Envoi code', resetCode, 'UNIQUEMENT à :', user.email);
+  await this.sendResetCodeEmail(user.email, resetCode);  // ← user.email, PAS MAIL_USER !
+
+  return safeResponse;
+}
+async verifyResetCodeAndChangePassword(
+  email: string, code: string, newPassword: string, confirmNewPassword: string
+): Promise<{ message: string }> {
+  console.log('🔐 verifyResetCodeAndChangePassword appelé pour email:', email);
+  
+  const user = await this.usersRepo.findOne({ 
+    where: { email },
+    select: ['id', 'email', 'password', 'verification_code', 'verification_code_expires', 'social_provider']
+  });
+
+  console.log('🔐 Utilisateur trouvé:', { 
+    id: user?.id, 
+    social_provider: user?.social_provider,
+    social_provider_type: typeof user?.social_provider 
+  });
+
+  if (!user) throw new BadRequestException('Code invalide ou expiré');
+  
+  // ✅ Vérification ULTRA-ROBUSTE : bloquer SEULEMENT google et linkedin
+  const provider = user.social_provider?.trim()?.toLowerCase();
+  console.log('🔐 Provider normalisé:', provider);
+  
+  if (provider === 'google' || provider === 'linkedin') {
+    console.log('❌ Blocage : compte social détecté');
+    throw new BadRequestException('Les comptes sociaux ne peuvent pas changer de mot de passe. Connectez-vous avec votre provider.');
   }
-
-  async verifyResetCodeAndChangePassword(
-    email: string, code: string, newPassword: string, confirmNewPassword: string
-  ): Promise<{ message: string }> {
-    const user = await this.usersRepo.findOne({ 
-      where: { email },
-      select: ['id', 'email', 'password', 'verification_code', 'verification_code_expires', 'social_provider']
-    });
-
-    if (!user) throw new BadRequestException('Code invalide ou expiré');
-    if (user.social_provider) {
-      throw new BadRequestException('Les comptes sociaux ne peuvent pas changer de mot de passe.');
-    }
-    if (user.verification_code !== code) throw new BadRequestException('Code incorrect');
-    if (user.verification_code_expires && new Date() > user.verification_code_expires) {
-      throw new BadRequestException('Code expiré');
-    }
-    if (newPassword.length < 6) throw new BadRequestException('Mot de passe trop court');
-    if (newPassword !== confirmNewPassword) throw new BadRequestException('Mots de passe différents');
-    
-    const hashed = await bcrypt.hash(newPassword, 10);
-    await this.usersRepo.update(user.id, {
-      password: hashed,
-      verification_code: null,
-      verification_type: null,
-      verification_code_expires: null,
-    });
-
-    return { message: 'Mot de passe mis à jour avec succès.' };
+  
+  if (user.verification_code !== code) {
+    console.log('❌ Code incorrect:', { received: code, expected: user.verification_code });
+    throw new BadRequestException('Code de vérification incorrect');
   }
+  
+  if (user.verification_code_expires && new Date() > user.verification_code_expires) {
+    console.log('❌ Code expiré:', { expires: user.verification_code_expires, now: new Date() });
+    throw new BadRequestException('Code expiré');
+  }
+  
+  if (newPassword.length < 6) throw new BadRequestException('Mot de passe trop court');
+  if (newPassword !== confirmNewPassword) throw new BadRequestException('Mots de passe différents');
+  
+  const hashed = await bcrypt.hash(newPassword, 10);
+  await this.usersRepo.update(user.id, {
+    password: hashed,
+    verification_code: null,
+    verification_type: null,
+    verification_code_expires: null,
+  });
 
+  console.log('✅ Mot de passe mis à jour avec succès pour user:', user.id);
+  return { message: 'Mot de passe mis à jour avec succès.' };
+}
   private async sendResetCodeEmail(to: string, code: string) {
-    await this.mailerService.sendMail({
-      to,
-      subject: '🔐 Réinitialisation de mot de passe - TalentSphere',
-      html: `
-        <div style="font-family: Arial; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h2 style="color: #6366f1;">🔐 Réinitialisation</h2>
-          <p>Votre code: <strong style="font-size: 24px; letter-spacing: 4px;">${code}</strong></p>
-          <p style="color: #6b7280; font-size: 12px;">Expire dans 10 minutes</p>
-        </div>
-      `,
-    });
-  }
+  // ✅ Log EXACT de qui reçoit l'email
+  console.log(`📤 [MAILER] Envoi code ${code} UNIQUEMENT à : ${to}`);
+  
+  await this.mailerService.sendMail({
+    to: to.trim(), // ← Force un seul destinataire
+    subject: '🔐 Réinitialisation - TalentSphere',
+    html: `
+      <div style="font-family: Arial; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
+        <h2 style="color: #6366f1;">🔐 Code de vérification</h2>
+        <p>Bonjour,</p>
+        <p>Votre code : <strong style="font-size: 24px; letter-spacing: 4px; background: #f3f4f6; padding: 8px 16px; border-radius: 6px;">${code}</strong></p>
+        <p style="color: #6b7280; font-size: 12px;">Expire dans 10 minutes. Ne partagez pas ce code.</p>
+      </div>
+    `,
+  });
+  console.log('✅ [MAILER] Email envoyé avec succès à', to);
+}
+
 }
