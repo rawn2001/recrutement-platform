@@ -1,56 +1,58 @@
 // src/pages/Dashboard/Dashboard.jsx
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import './Dashboard.css';
 import logo from '../../assets/logo.png';
-// 🔹 Composant Avatar (à ajouter après les imports)
+
+const API = 'http://localhost:3000';
+
+// 🔹 Composant Avatar - VERSION CORRIGÉE
 function Avatar({ src, name, size = 42, className = '' }) {
   const initial = name?.[0]?.toUpperCase() || 'U';
+  const [error, setError] = useState(false);
   
-  if (src) {
+  if (!src || error) {
     return (
-      <img 
-        src={src} 
-        alt={name || 'Avatar'} 
-        className={`dash-avatar-img ${className}`}
+      <div 
+        className={`dash-avatar-placeholder ${className}`} 
         style={{ 
           width: size, 
           height: size, 
           borderRadius: '50%', 
-          objectFit: 'cover',
-          border: '2px solid #e2e8f0'
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          color: 'white',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontWeight: 600,
+          fontSize: size * 0.4,
+          flexShrink: 0
         }}
-        onError={(e) => {
-          // Fallback sur initiale si l'image ne charge pas
-          e.target.style.display = 'none';
-          e.target.nextElementSibling?.style?.display?.('flex');
-        }}
-      />
+      >
+        {initial}
+      </div>
     );
   }
   
   return (
-    <div 
-      className={`dash-avatar-placeholder ${className}`} 
+    <img 
+      src={src} 
+      alt={name || 'Avatar'} 
+      className={`dash-avatar-img ${className}`}
       style={{ 
         width: size, 
         height: size, 
         borderRadius: '50%', 
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        color: 'white',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontWeight: 600,
-        fontSize: size * 0.4
+        objectFit: 'cover',
+        border: '2px solid #e2e8f0',
+        flexShrink: 0
       }}
-    >
-      {initial}
-    </div>
+      referrerPolicy="no-referrer"
+      onError={() => setError(true)}
+    />
   );
 }
-const API = 'http://localhost:3000';
 
 const RECRUITER_TIPS = [
   { icon: '✦', title: 'Titre accrocheur', desc: 'Un titre précis augmente les candidatures de 40%.' },
@@ -81,21 +83,20 @@ function Sidebar({ user, activePath, navigate, onLogout }) {
 
   const navItems = isRecruteur
     ? [
-        { path: '/dashboard',        icon: '⬡', label: 'Tableau de bord' },
-        { path: '/recruiter/post',   icon: '✦', label: 'Publier une offre' },
+        { path: '/dashboard', icon: '⬡', label: 'Tableau de bord' },
+        { path: '/recruiter/post', icon: '✦', label: 'Publier une offre' },
         { path: '/recruiter/manage', icon: '◈', label: 'Gérer candidatures' },
         { path: '/profile', icon: '👤', label: 'Mon Profil' },
       ]
     : [
-        { path: '/dashboard',                 icon: '⬡', label: 'Tableau de bord' },
-        { path: '/candidate/jobs',            icon: '◎', label: "Offres d'emploi" },
+        { path: '/dashboard', icon: '⬡', label: 'Tableau de bord' },
+        { path: '/candidate/jobs', icon: '◎', label: "Offres d'emploi" },
         { path: '/candidate/my-applications', icon: '◷', label: 'Mes candidatures' },
-         { path: '/profile', icon: '👤', label: 'Mon Profil' },
+        { path: '/profile', icon: '👤', label: 'Mon Profil' },
       ];
 
   return (
     <aside className="dash-sidebar">
-      {/* Logo */}
       <div className="dash-sidebar-top">
         <div className="dash-logo">
           <img
@@ -109,19 +110,16 @@ function Sidebar({ user, activePath, navigate, onLogout }) {
         </div>
       </div>
 
-      {/* User card */}
-     {/* User card */}
-<div className="dash-user-card">
-  <Avatar src={user?.photo_url} name={name} size={42} />
-  <div className="dash-user-info">
-    <div className="dash-user-name">{name}</div>
-    <span className={`dash-role-badge ${isRecruteur ? 'rec' : 'cand'}`}>
-      {isRecruteur ? '🏢 Recruteur' : '🎯 Candidat'}
-    </span>
-  </div>
-</div>
+      <div className="dash-user-card">
+        <Avatar src={user?.photo_url} name={name} size={42} />
+        <div className="dash-user-info">
+          <div className="dash-user-name">{name}</div>
+          <span className={`dash-role-badge ${isRecruteur ? 'rec' : 'cand'}`}>
+            {isRecruteur ? '🏢 Recruteur' : '🎯 Candidat'}
+          </span>
+        </div>
+      </div>
 
-      {/* Nav */}
       <nav className="dash-nav">
         <div className="dash-nav-section">Navigation</div>
         {navItems.map(item => (
@@ -136,7 +134,6 @@ function Sidebar({ user, activePath, navigate, onLogout }) {
         ))}
       </nav>
 
-      {/* Inline tips in sidebar */}
       <div className="dash-sidebar-tips">
         <div className="dash-sidebar-tips-title">
           💡 {isRecruteur ? 'Conseils recruteur' : 'Conseils candidat'}
@@ -205,26 +202,25 @@ function HomeView({ user, stats, navigate }) {
 
   const statCards = isRecruteur
     ? [
-        { icon: '◈', label: 'Offres publiées',     value: stats.offers, accent: '#5B5FE8', accentBg: 'rgba(91,95,232,0.08)' },
-        { icon: '◷', label: 'Candidatures reçues', value: stats.apps,   accent: '#059669', accentBg: 'rgba(5,150,105,0.08)'  },
-        { icon: '◎', label: 'Vues ce mois',        value: '—',          accent: '#0284C7', accentBg: 'rgba(2,132,199,0.08)'  },
-        { icon: '✦', label: 'Taux de réponse',     value: '—',          accent: '#D97706', accentBg: 'rgba(217,119,6,0.08)'  },
+        { icon: '◈', label: 'Offres publiées', value: stats.offers, accent: '#5B5FE8', accentBg: 'rgba(91,95,232,0.08)' },
+        { icon: '◷', label: 'Candidatures reçues', value: stats.apps, accent: '#059669', accentBg: 'rgba(5,150,105,0.08)' },
+        { icon: '◎', label: 'Vues ce mois', value: '—', accent: '#0284C7', accentBg: 'rgba(2,132,199,0.08)' },
+        { icon: '✦', label: 'Taux de réponse', value: '—', accent: '#D97706', accentBg: 'rgba(217,119,6,0.08)' },
       ]
     : [
-        { icon: '◷', label: 'Candidatures',       value: stats.apps, accent: '#5B5FE8', accentBg: 'rgba(91,95,232,0.08)' },
-        { icon: '◎', label: 'Offres disponibles', value: '—',        accent: '#059669', accentBg: 'rgba(5,150,105,0.08)' },
-        { icon: '✦', label: 'En attente',         value: '—',        accent: '#D97706', accentBg: 'rgba(217,119,6,0.08)' },
-        { icon: '⬡', label: 'Score moyen',        value: '—',        accent: '#0284C7', accentBg: 'rgba(2,132,199,0.08)' },
+        { icon: '◷', label: 'Candidatures', value: stats.apps, accent: '#5B5FE8', accentBg: 'rgba(91,95,232,0.08)' },
+        { icon: '◎', label: 'Offres disponibles', value: '—', accent: '#059669', accentBg: 'rgba(5,150,105,0.08)' },
+        { icon: '✦', label: 'En attente', value: '—', accent: '#D97706', accentBg: 'rgba(217,119,6,0.08)' },
+        { icon: '⬡', label: 'Score moyen', value: '—', accent: '#0284C7', accentBg: 'rgba(2,132,199,0.08)' },
       ];
 
   return (
     <div className="dash-home">
-      {/* Welcome Banner */}
       <div className="dash-welcome-banner">
         <div className="dash-welcome-dots" />
         <div className="dash-welcome-left">
-  <Avatar src={user?.photo_url} name={name} size={58} />
-  <div style={{ position: 'relative', zIndex: 1 }}>
+          <Avatar src={user?.photo_url} name={name} size={58} />
+          <div style={{ position: 'relative', zIndex: 1 }}>
             <h2>Bonjour, {name} 👋</h2>
             <p>{isRecruteur
               ? 'Gérez vos offres et trouvez les meilleurs talents.'
@@ -241,7 +237,6 @@ function HomeView({ user, stats, navigate }) {
         </div>
       </div>
 
-      {/* Stats row */}
       <div className="dash-stats-grid">
         {statCards.map((s, i) => (
           <div className="dash-stat-card" key={i}
@@ -255,9 +250,7 @@ function HomeView({ user, stats, navigate }) {
         ))}
       </div>
 
-      {/* 2-col layout */}
       <div className="dash-home-main">
-        {/* Left: cards */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div className="dash-card">
             <div className="dash-card-header"><h3>⚡ Actions rapides</h3></div>
@@ -319,7 +312,6 @@ function HomeView({ user, stats, navigate }) {
           </div>
         </div>
 
-        {/* Right: hot fields + promo */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <HotFieldsPanel />
 
@@ -353,27 +345,80 @@ export default function Dashboard() {
   const [stats, setStats] = useState({ offers: 0, apps: 0 });
   const [loading, setLoading] = useState(true);
 
-  const handleLogout = () => { localStorage.clear(); navigate('/login'); };
-
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) { navigate('/login'); return; }
-
-    axios.get(`${API}/auth/me`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(res => {
-        setUser(res.data);
-        if (res.data.role === 'recruteur') {
-          axios.get(`${API}/job-offers/my-offers`, { headers: { Authorization: `Bearer ${token}` } })
-            .then(r => setStats({ offers: r.data.length, apps: 0 }))
-            .finally(() => setLoading(false));
-        } else {
-          axios.get(`${API}/job-applications/my-applications`, { headers: { Authorization: `Bearer ${token}` } })
-            .then(r => setStats({ offers: 0, apps: r.data.length }))
-            .finally(() => setLoading(false));
-        }
-      })
-      .catch(() => { localStorage.clear(); navigate('/login'); });
+  // ✅ Fonction pour charger les données utilisateur (mémorisée avec useCallback)
+  const fetchUserData = useCallback(async (token) => {
+    try {
+      const res = await axios.get(`${API}/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setUser(res.data);
+      
+      if (res.data.role === 'recruteur') {
+        const r = await axios.get(`${API}/job-offers/my-offers`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setStats({ offers: r.data.length, apps: 0 });
+      } else {
+        const r = await axios.get(`${API}/job-applications/my-applications`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setStats({ offers: 0, apps: r.data.length });
+      }
+    } catch (err) {
+      console.error('❌ Erreur chargement user:', err);
+      localStorage.clear();
+      navigate('/login');
+    } finally {
+      setLoading(false);
+    }
   }, [navigate]);
+
+ // ✅ useEffect principal : chargement initial + capture token OAuth
+useEffect(() => {
+  // 1️⃣ D'abord, vérifier si on a un token OAuth dans l'URL
+  const urlParams = new URLSearchParams(location.search);
+  const oauthToken = urlParams.get('token');
+  const userJson = urlParams.get('user');
+  
+  if (oauthToken) {
+    console.log('✅ Token OAuth reçu dans Dashboard');
+    
+    // Sauvegarder le token OAuth dans localStorage
+    localStorage.setItem('token', oauthToken);
+    if (userJson) {
+      try {
+        const parsedUser = JSON.parse(decodeURIComponent(userJson));
+        localStorage.setItem('user', JSON.stringify(parsedUser));
+        setUser(parsedUser);
+      } catch (e) {
+        console.error('❌ Erreur parsing user OAuth:', e);
+      }
+    }
+    
+    // Nettoyer l'URL
+    window.history.replaceState({}, document.title, '/dashboard');
+    
+    // Recharger les données avec le nouveau token
+    fetchUserData(oauthToken);
+    return; // ← IMPORTANT: sortir de la fonction
+  }
+
+  // 2️⃣ Ensuite, vérifier localStorage
+  const token = localStorage.getItem('token');
+  
+  // Si pas de token dans localStorage, rediriger vers login
+  if (!token) {
+    navigate('/login');
+    return;
+  }
+
+  // 3️⃣ Chargement normal avec le token existant
+  fetchUserData(token);
+}, [location, fetchUserData, navigate]);
+  const handleLogout = () => { 
+    localStorage.clear(); 
+    navigate('/login'); 
+  };
 
   if (loading) return (
     <div className="dash-loading">
@@ -381,6 +426,7 @@ export default function Dashboard() {
       <span>Chargement de votre espace</span>
     </div>
   );
+  
   if (!user) return null;
 
   const name = user.nom_societe || user.prenom || user.first_name || 'Utilisateur';
@@ -393,7 +439,7 @@ export default function Dashboard() {
           <div className="dash-page-title">Tableau de bord</div>
           <div className="dash-topbar-right">
             <button className="dash-topbar-btn" title="Notifications">🔔</button>
-            <div className="dash-topbar-avatar">{name[0].toUpperCase()}</div>
+            <Avatar src={user?.photo_url} name={name} size={36} className="dash-topbar-avatar-img" />
           </div>
         </header>
         <main className="dash-content">

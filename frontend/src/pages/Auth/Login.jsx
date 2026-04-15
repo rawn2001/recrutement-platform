@@ -1,22 +1,50 @@
 // src/pages/Auth/Login.jsx
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react'; // ← Ajoute useEffect
+import { useNavigate, Link, useSearchParams } from 'react-router-dom'; // ← Ajoute useSearchParams
 import axios from 'axios';
 import logo from '../../assets/logo.png';
-// ✅ Backend NestJS tourne sur port 3000
+
 const BACKEND_URL = 'http://localhost:3000';
 
 export default function Login() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams(); // ← Pour lire les params d'URL
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // ✅ CAPTURER LE TOKEN DEPUIS L'URL (après redirection Google)
+  useEffect(() => {
+    const token = searchParams.get('token');
+    const userJson = searchParams.get('user');
+    
+    if (token) {
+      console.log('✅ Token OAuth reçu dans Login');
+      
+      // Sauvegarder dans localStorage
+      localStorage.setItem('token', token);
+      if (userJson) {
+        try {
+          const user = JSON.parse(decodeURIComponent(userJson));
+          localStorage.setItem('user', JSON.stringify(user));
+        } catch (e) {
+          console.error('❌ Erreur parsing user OAuth:', e);
+        }
+      }
+      
+      // Nettoyer l'URL
+      window.history.replaceState({}, document.title, '/login');
+      
+      // Rediriger vers le dashboard
+      console.log('🔵 Redirection vers /dashboard');
+      navigate('/dashboard', { replace: true });
+    }
+  }, [searchParams, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    
     try {
       const res = await axios.post(`${BACKEND_URL}/auth/login`, form);
       localStorage.setItem('token', res.data.token);
@@ -29,24 +57,21 @@ export default function Login() {
     }
   };
 
-  // 🔵🔷 Login social - URL DIRECTE vers backend (sans query params)
   const handleSocialLogin = (provider) => {
     console.log(`🔵 Init ${provider} OAuth...`);
-    // ✅ URL exacte attendue par NestJS Passport
     window.location.href = `${BACKEND_URL}/auth/${provider}`;
   };
 
   return (
     <div className="auth-page">
       <div className="auth-card">
-       <div className="auth-logo" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 8 }}>
-  <img src={logo} alt="TalentSphere" style={{ width: 40, height: 40, objectFit: 'contain' }} />
-  <span className="logo-text">Talent<span className="logo-accent">Sphere</span></span>
-</div>
+        <div className="auth-logo" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 8 }}>
+          <img src={logo} alt="TalentSphere" style={{ width: 40, height: 40, objectFit: 'contain' }} />
+          <span className="logo-text">Talent<span className="logo-accent">Sphere</span></span>
+        </div>
         <h2>Connexion</h2>
         <p className="auth-subtitle">Bienvenue, connectez-vous à votre compte</p>
 
-        {/* 🔵🔷 Boutons sociaux */}
         <div className="social-buttons" style={{ marginBottom: 20 }}>
           <button 
             type="button" 
@@ -97,7 +122,6 @@ export default function Login() {
           <span>─ ou utilisez votre email ─</span>
         </div>
 
-        {/* 📧 Formulaire email classique */}
         <form onSubmit={handleSubmit}>
           <div className="field">
             <label>Email</label>
@@ -126,7 +150,16 @@ export default function Login() {
             {loading ? 'Connexion...' : 'Se connecter'}
           </button>
         </form>
-
+        <div style={{textAlign:'right', marginTop:8}}>
+          <button 
+            type="button" 
+            className="btn-back" 
+            onClick={() => navigate('/forgot-password')}
+            style={{fontSize:13, padding:0}}
+          >
+            Mot de passe oublié ?
+          </button>
+        </div>
         <p className="auth-switch">
           Pas encore de compte ? <Link to="/signup">S'inscrire</Link>
         </p>

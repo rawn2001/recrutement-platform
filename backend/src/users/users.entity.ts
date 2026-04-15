@@ -40,11 +40,15 @@ export class User {
   @Column({ default: false })
   phone_verified: boolean;
 
-  @Column({ nullable: true })
-  verification_code: string;
+  // ✅ CORRECTION: type: 'varchar' force PostgreSQL à utiliser une chaîne
+  @Column({ type: 'varchar', nullable: true })
+  verification_code: string | null;
 
-  @Column({ nullable: true })
-  verification_type: string;
+  @Column({ type: 'varchar', nullable: true })
+  verification_type: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  verification_code_expires: Date | null;
 
   @Column({ nullable: true })
   role: string;
@@ -72,7 +76,6 @@ export class User {
   @JoinColumn()
   recruteurProfile?: RecruiterProfile;
 
-  // 🔗 Nouvelles relations pour les offres
   @OneToMany(() => JobOffer, (offer) => offer.recruiter)
   postedOffers?: JobOffer[];
 

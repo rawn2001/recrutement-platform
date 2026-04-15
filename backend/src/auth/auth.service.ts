@@ -261,10 +261,16 @@ export class AuthService {
     if (user) {
       console.log('✅ UTILISATEUR EXISTANT trouvé:', user.id);
       return { 
-        token: this.generateToken(user), 
-        redirect: '/dashboard', 
-        isNew: false 
-      };
+    token: this.generateToken(user),  // ← CRUCIAL !
+    redirect: '/dashboard',
+    isNew: false,
+    user: {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      photo_url: user.photo_url
+    }
+  };
     }
 
     console.log('🔍 Vérifier si email existe avec un autre provider');

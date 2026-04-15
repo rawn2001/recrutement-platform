@@ -19,7 +19,11 @@ import ApplyJob from './pages/Candidate/ApplyJob';
 import MyApplications from './pages/Candidate/MyApplications';
 import CompleteProfile from './pages/Auth/CompleteProfile';
 import './assets/auth.css';
+// Imports
+import ForgotPassword from './pages/Auth/ForgotPassword';
+import ResetPassword from './pages/Auth/ResetPassword';
 
+// Routes
 export default function App() {
   return (
     <BrowserRouter>
@@ -46,6 +50,8 @@ export default function App() {
         {/* ✅ AJOUTE CETTE LIGNE */}
 <Route path="/profile" element={<Profile />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+<Route path="/reset-password" element={<ResetPassword />} />
       </Routes>
     </BrowserRouter>
   );
