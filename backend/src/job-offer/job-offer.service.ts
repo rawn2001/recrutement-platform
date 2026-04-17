@@ -12,10 +12,8 @@ export class JobOfferService {
   ) {}
 
   async create(recruiterId: number, formData: Partial<JobOffer>): Promise<JobOffer> {
-    // ✅ 1. Nettoyer application_deadline : convertir string → Date ou null
     let application_deadline: Date | null = null;
     if (formData.application_deadline) {
-      // Si c'est une string (venant du frontend), la convertir
       if (typeof formData.application_deadline === 'string') {
         const date = new Date(formData.application_deadline);
         if (!isNaN(date.getTime())) {
@@ -26,11 +24,8 @@ export class JobOfferService {
       }
     }
 
-    // ✅ 2. required_skills est déjà string[] | undefined dans Partial<JobOffer>
-    // Pas besoin de .split() ici - c'est fait côté frontend
     const required_skills = formData.required_skills || [];
 
-    // ✅ 3. Créer l'offre avec les champs nettoyés
     const offerData: Partial<JobOffer> = {
       ...formData,
       recruiter_id: recruiterId,
@@ -38,20 +33,35 @@ export class JobOfferService {
       required_skills,
     };
 
-    // ✅ 4. Retirer les champs frontend-only qui ne sont pas dans l'entity
     delete (offerData as any).skillsInput;
 
     const offer = this.jobOfferRepo.create(offerData as JobOffer);
     return this.jobOfferRepo.save(offer);
   }
 
-  async findAllActive(): Promise<JobOffer[]> {
-    return this.jobOfferRepo.find({
-      where: { is_active: true },
-      relations: ['recruiter'],
-      order: { created_at: 'DESC' }
-    });
-  }
+  // ✅ MODIFIÉ : Utiliser createQueryBuilder pour charger les relations imbriquées
+ async findAllActive(): Promise<JobOffer[]> {
+  const offers = await this.jobOfferRepo
+    .createQueryBuilder('offer')
+    .leftJoinAndSelect('offer.recruiter', 'recruiter')
+    .leftJoinAndSelect('recruiter.recruteurProfile', 'recruteurProfile')
+    .where('offer.is_active = :isActive', { isActive: true })
+    .orderBy('offer.created_at', 'DESC')
+    .getMany();
+  
+  // 🔍 DEBUG : Voir ce qui est chargé
+  console.log('📦 [BACKEND] Offres chargées:', offers.map(o => ({
+    id: o.id,
+    title: o.title,
+    recruiterId: o.recruiter_id,
+    recruiterEmail: o.recruiter?.email,
+    hasProfile: !!o.recruiter?.recruteurProfile,
+    nomSociete: o.recruiter?.recruteurProfile?.nom_societe,
+    domaine: o.recruiter?.recruteurProfile?.domaine
+  })));
+  
+  return offers;
+}
 
   async findByRecruiter(recruiterId: number): Promise<JobOffer[]> {
     return this.jobOfferRepo.find({
@@ -60,11 +70,15 @@ export class JobOfferService {
     });
   }
 
+  // ✅ MODIFIÉ : Utiliser createQueryBuilder ici aussi
   async findOne(id: number): Promise<JobOffer> {
-    const offer = await this.jobOfferRepo.findOne({
-      where: { id },
-      relations: ['recruiter']
-    });
+    const offer = await this.jobOfferRepo
+      .createQueryBuilder('offer')
+      .leftJoinAndSelect('offer.recruiter', 'recruiter')
+      .leftJoinAndSelect('recruiter.recruteurProfile', 'recruteurProfile')
+      .where('offer.id = :id', { id })
+      .getOne();
+    
     if (!offer) throw new NotFoundException('Offre non trouvée');
     return offer;
   }
@@ -75,7 +89,6 @@ export class JobOfferService {
       throw new BadRequestException('Vous ne pouvez pas modifier cette offre');
     }
     
-    // Même nettoyage pour update
     if (formData.application_deadline) {
       if (typeof formData.application_deadline === 'string') {
         const date = new Date(formData.application_deadline);

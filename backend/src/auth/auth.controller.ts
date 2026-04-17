@@ -127,22 +127,20 @@ async googleCallback(@Req() req: any, @Res() res: Response) {
   console.log('🔵 GOOGLE CALLBACK - User:', req.user);
   
   const result = await this.authService.handleSocialLogin(req.user, 'google');
-  console.log('🔵 Résultat handleSocialLogin:', {
-    isNew: result.isNew,
-    hasToken: !!result.token,
-    redirect: result.redirect
-  });
-  
   const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
-  console.log('🔵 Frontend URL:', frontendUrl);
   
+  // ✅ Branch NEW USER : assertion explicite
   if (result.isNew) {
-    const redirectUrl = `${frontendUrl}${result.redirect}`;
-    console.log('🔵 Redirect vers complete-profile:', redirectUrl);
+    const newResult = result as { isNew: true; tempToken: string; redirect: string };
+    const redirectUrl = `${frontendUrl}${newResult.redirect}?tempToken=${newResult.tempToken}`;
+    console.log('🔵 Redirect vers complete-profile');
     return res.redirect(redirectUrl);
-  } else {
-    const redirectUrl = `${frontendUrl}/dashboard?token=${result.token}&user=${encodeURIComponent(JSON.stringify(result.user))}`;
-    console.log('🔵 Redirect vers dashboard (URL complète):', redirectUrl.substring(0, 100) + '...');
+  } 
+  // ✅ Branch EXISTING USER : assertion explicite
+  else {
+    const existingResult = result as { isNew: false; token: string; redirect: string; user: any };
+    const redirectUrl = `${frontendUrl}/dashboard?token=${existingResult.token}&user=${encodeURIComponent(JSON.stringify(existingResult.user))}`;
+    console.log('🔵 Redirect vers dashboard');
     return res.redirect(redirectUrl);
   }
 }
@@ -151,27 +149,25 @@ async googleCallback(@Req() req: any, @Res() res: Response) {
   // 🔷 LinkedIn OAuth
   // ═══════════════════════════════════════════════════
 
-  @Get('linkedin')
-  @UseGuards(AuthGuard('linkedin'))
-  linkedinAuth() {
-    console.log('LinkedIn OAuth initié');
+@Get('linkedin/callback')
+@UseGuards(AuthGuard('linkedin'))
+async linkedinCallback(@Req() req: any, @Res() res: Response) {
+  console.log('🔵 LINKEDIN CALLBACK - User:', req.user);
+  
+  const result = await this.authService.handleSocialLogin(req.user, 'linkedin');
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
+  
+  // ✅ Même logique avec assertions
+  if (result.isNew) {
+    const newResult = result as { isNew: true; tempToken: string; redirect: string };
+    const redirectUrl = `${frontendUrl}${newResult.redirect}?tempToken=${newResult.tempToken}`;
+    return res.redirect(redirectUrl);
+  } else {
+    const existingResult = result as { isNew: false; token: string; redirect: string; user: any };
+    const redirectUrl = `${frontendUrl}/dashboard?token=${existingResult.token}&user=${encodeURIComponent(JSON.stringify(existingResult.user))}`;
+    return res.redirect(redirectUrl);
   }
-
-  @Get('linkedin/callback')
-  @UseGuards(AuthGuard('linkedin'))
-  async linkedinCallback(@Req() req: any, @Res() res: Response) {
-    console.log('🔵 LINKEDIN CALLBACK - User:', req.user);
-    
-    const result = await this.authService.handleSocialLogin(req.user, 'linkedin');
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
-    
-    if (result.isNew) {
-      res.redirect(`${frontendUrl}${result.redirect}`);
-    } else {
-      res.redirect(`${frontendUrl}/dashboard?token=${result.token}&user=${encodeURIComponent(JSON.stringify(result.user))}`);
-    }
-  }
-
+}
   // ═══════════════════════════════════════════════════
   // 📝 Complétion profil social
   // ═══════════════════════════════════════════════════

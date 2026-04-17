@@ -4,6 +4,7 @@ import { CandidateProfile } from '../candidate-profile/candidate-profile.entity'
 import { RecruiterProfile } from '../recruiter-profile/recruiter-profile.entity';
 import { JobOffer } from '../job-offer/job-offer.entity';
 import { JobApplication } from '../job-application/job-application.entity';
+import { Expose } from 'class-transformer'; 
 
 @Entity('users')
 export class User {
@@ -72,9 +73,11 @@ export class User {
   @JoinColumn()
   candidatProfile?: CandidateProfile;
 
-  @OneToOne(() => RecruiterProfile, (profile) => profile.user, { cascade: true })
-  @JoinColumn()
-  recruteurProfile?: RecruiterProfile;
+// Dans la classe User - relation recruteurProfile :
+
+@OneToOne(() => RecruiterProfile, (profile) => profile.user, { cascade: true })
+// ❌ SUPPRIME @JoinColumn() d'ici ! C'est côté RecruiterProfile qu'il doit être
+recruteurProfile?: RecruiterProfile;
 
   @OneToMany(() => JobOffer, (offer) => offer.recruiter)
   postedOffers?: JobOffer[];

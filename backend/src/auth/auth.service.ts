@@ -258,10 +258,14 @@ export class AuthService {
     console.log('🔵 Recherche utilisateur avec email:', email, 'et provider:', provider);
     let user = await this.usersService.findOneBySocial(email, provider);
     
-    if (user) {
-      console.log('✅ UTILISATEUR EXISTANT trouvé:', user.id);
-      return { 
-    token: this.generateToken(user),  // ← CRUCIAL !
+   if (user) {
+  console.log('✅ UTILISATEUR EXISTANT trouvé:', user.id);
+  
+  const token = this.generateToken(user);
+  console.log('🔵 Token généré (premiers 50 caractères):', token.substring(0, 50) + '...');
+  
+  const result = { 
+    token,
     redirect: '/dashboard',
     isNew: false,
     user: {
@@ -271,6 +275,15 @@ export class AuthService {
       photo_url: user.photo_url
     }
   };
+  
+  console.log('🔵 Résultat à retourner au controller:', JSON.stringify({
+    isNew: result.isNew,
+    hasToken: !!result.token,
+    userId: result.user.id
+  }, null, 2));
+  
+  return result;
+
     }
 
     console.log('🔍 Vérifier si email existe avec un autre provider');

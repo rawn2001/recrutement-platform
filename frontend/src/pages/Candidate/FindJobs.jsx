@@ -44,25 +44,27 @@ export default function FindJobs() {
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
   const [levelFilter, setLevelFilter] = useState('');
-
-  useEffect(() => {
-    axios.get(`${API}/job-offers`)
-      .then(res => { setOffers(res.data); setFiltered(res.data); })
-      .finally(() => setLoading(false));
-  }, []);
-
-  useEffect(() => {
-    let result = offers;
-    if (search) result = result.filter(o =>
-      o.title?.toLowerCase().includes(search.toLowerCase()) ||
-      o.location?.toLowerCase().includes(search.toLowerCase()) ||
-      o.required_skills?.some(s => s.toLowerCase().includes(search.toLowerCase()))
-    );
-    if (typeFilter) result = result.filter(o => o.employment_type === typeFilter);
-    if (levelFilter) result = result.filter(o => o.experience_level === levelFilter);
-    setFiltered(result);
-  }, [search, typeFilter, levelFilter, offers]);
-
+useEffect(() => {
+  axios.get(`${API}/job-offers`)
+    .then(res => { 
+      console.log('📦 OFFRES REÇUES DU BACKEND:', JSON.stringify(res.data, null, 2));
+      
+      // 🔍 DEBUG SPÉCIFIQUE
+      if (res.data && res.data[0]) {
+        console.log('🔍 PREMIÈRE OFFRE:');
+        console.log('  - ID:', res.data[0].id);
+        console.log('  - Titre:', res.data[0].title);
+        console.log('  - Recruiter:', res.data[0].recruiter);
+        console.log('  - RecruiterProfile:', res.data[0].recruiter?.recruteurProfile);
+        console.log('  - Nom Société:', res.data[0].recruiter?.recruteurProfile?.nom_societe);
+      }
+      
+      setOffers(res.data); 
+      setFiltered(res.data); 
+    })
+    .catch(err => console.error('❌ Erreur chargement offres:', err))
+    .finally(() => setLoading(false));
+}, []);
   if (loading) return (
     <div className="dash-loading">
       <div className="dash-spinner" />
@@ -121,53 +123,109 @@ export default function FindJobs() {
             ) : (
               <div className="job-grid">
                 {filtered.map(offer => (
-                  <div
-                    key={offer.id}
-                    className="job-offer-card"
-                    onClick={() => navigate(`/candidate/jobs/${offer.id}`)}
-                  >
-                    <div className="job-offer-title">{offer.title}</div>
-                    {offer.company_name && (
-                      <div className="job-offer-company">🏢 {offer.company_name}</div>
-                    )}
+  <div
+    key={offer.id}
+    className="job-offer-card"
+    onClick={() => navigate(`/candidate/jobs/${offer.id}`)}
+  >
+    {/* 🏢 NOM DE LA SOCIÉTÉ - Version finale */}
+<div style={{ marginBottom: 8 }}>
+  <div style={{ 
+    display: 'flex', 
+    alignItems: 'center', 
+    gap: 8,
+    marginBottom: 4
+  }}>
+    {/* Logo/Initiale */}
+    <div style={{ 
+      width: 32, height: 32, borderRadius: 8, 
+      background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+      color: 'white',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontWeight: 'bold', fontSize: 14, flexShrink: 0
+    }}>
+      {offer.recruiter?.recruteurProfile?.nom_societe?.charAt(0)?.toUpperCase() || 'E'}
+    </div>
+    
+    {/* Nom de la société en GRAS */}
+    <span style={{ 
+      fontWeight: 700,  // ← Plus gras
+      fontSize: 15, 
+      color: '#1e293b'
+    }}>
+      {offer.recruiter?.recruteurProfile?.nom_societe || 'Entreprise'}
+    </span>
+  </div>
+  
+  {/* Domaine en gris en dessous */}
+  {offer.recruiter?.recruteurProfile?.domaine && (
+    <span style={{ 
+      fontSize: 12, 
+      color: '#64748b',  // ← Gris
+      marginLeft: 40,
+      display: 'block',
+      marginTop: 2
+    }}>
+      {offer.recruiter.recruteurProfile.domaine}
+    </span>
+  )}
+</div>
+    {/* 🔹 TITRE DU POSTE - Plus grand et visible */}
+    <div className="job-offer-title" style={{ 
+      fontSize: 18, 
+      fontWeight: 700, 
+      marginBottom: 12,
+      color: '#0f172a'
+    }}>
+      {offer.title}
+    </div>
 
-                    <div className="job-badges">
-                      {offer.employment_type && <span className="job-badge type">{offer.employment_type}</span>}
-                      {offer.experience_level && <span className="job-badge level">{offer.experience_level}</span>}
-                      {offer.location && <span className="job-badge location">📍 {offer.location}</span>}
-                    </div>
+    {/* 🔹 Badges */}
+    <div className="job-badges" style={{ marginBottom: 12 }}>
+      {offer.employment_type && (
+        <span className="job-badge type">{offer.employment_type}</span>
+      )}
+      {offer.experience_level && (
+        <span className="job-badge level">{offer.experience_level}</span>
+      )}
+      {offer.location && (
+        <span className="job-badge location">📍 {offer.location}</span>
+      )}
+    </div>
 
-                    {offer.required_skills?.length > 0 && (
-                      <div className="job-skills">
-                        {offer.required_skills.slice(0, 4).map((s, i) => (
-                          <span key={i} className="skill-chip">{s}</span>
-                        ))}
-                        {offer.required_skills.length > 4 && (
-                          <span className="skill-chip">+{offer.required_skills.length - 4}</span>
-                        )}
-                      </div>
-                    )}
+    {/* 🔹 Skills */}
+    {offer.required_skills?.length > 0 && (
+      <div className="job-skills" style={{ marginBottom: 12 }}>
+        {offer.required_skills.slice(0, 4).map((s, i) => (
+          <span key={i} className="skill-chip">{s}</span>
+        ))}
+        {offer.required_skills.length > 4 && (
+          <span className="skill-chip">+{offer.required_skills.length - 4}</span>
+        )}
+      </div>
+    )}
 
-                    <div className="job-card-footer">
-                      <div>
-                        {offer.salary_range && (
-                          <div className="job-card-salary">💰 {offer.salary_range}</div>
-                        )}
-                        {offer.application_deadline && (
-                          <div className="job-card-date">
-                            Deadline: {new Date(offer.application_deadline).toLocaleDateString('fr-FR')}
-                          </div>
-                        )}
-                      </div>
-                      <button
-                        className="btn-apply"
-                        onClick={e => { e.stopPropagation(); navigate(`/candidate/jobs/${offer.id}`); }}
-                      >
-                        Postuler →
-                      </button>
-                    </div>
-                  </div>
-                ))}
+    {/* 🔹 Footer */}
+    <div className="job-card-footer">
+      <div>
+        {offer.salary_range && (
+          <div className="job-card-salary">💰 {offer.salary_range}</div>
+        )}
+        {offer.application_deadline && (
+          <div className="job-card-date">
+            Deadline: {new Date(offer.application_deadline).toLocaleDateString('fr-FR')}
+          </div>
+        )}
+      </div>
+      <button
+        className="btn-apply"
+        onClick={e => { e.stopPropagation(); navigate(`/candidate/jobs/${offer.id}`); }}
+      >
+        Postuler →
+      </button>
+    </div>
+  </div>
+))}
               </div>
             )}
           </div>

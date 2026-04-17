@@ -32,14 +32,11 @@ export class JobOffer {
   @Column({ default: true })
   is_active: boolean;
 
-@Column({ 
-  type: 'timestamp',  // ← Type SQL explicite pour PostgreSQL
-  nullable: true,
-  default: null
-})
-application_deadline: Date | null;
+  @Column({ type: 'timestamp', nullable: true, default: null })
+  application_deadline: Date | null;
 
-  @ManyToOne(() => User, user => user.postedOffers)
+  // ✅ Relation recruiter - UNE SEULE FOIS !
+  @ManyToOne(() => User, user => user.postedOffers, { nullable: false })
   @JoinColumn({ name: 'recruiter_id' })
   recruiter: User;
 
