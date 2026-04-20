@@ -5,6 +5,13 @@ import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { JobApplicationService } from './job-application.service';
+// chayma
+// ✅ Par celui-ci :
+import { memoryStorage } from 'multer';  // ← Pour garder le buffer en mémoire
+import { extname } from 'path';
+import { writeFileSync, mkdirSync } from 'fs';  // ← Pour sauvegarder sur disque après
+import { join } from 'path';
+
 
 // ✅ Type simple pour le fichier uploadé (évite l'erreur Express.Multer)
 type UploadedFileType = {
@@ -15,7 +22,7 @@ type UploadedFileType = {
   size: number;
   filename?: string;
   path?: string;
-  buffer?: Buffer;
+  buffer?: Buffer;FileInterceptor
 };
 
 @Controller('job-applications')
@@ -25,21 +32,70 @@ export class JobApplicationController {
   @Post('apply/:jobOfferId')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('candidat')
-  @UseInterceptors(FileInterceptor('cv'))
-  async apply(
-    @Req() req: any,
-    @Param('jobOfferId') jobOfferId: string,
-    @Body() formData: any,
-    @UploadedFile() file?: UploadedFileType,  // ✅ Type personnalisé, pas Express.Multer.File
-  ) {
-    const candidateId = req.user.id;
-    const applicationData = {
-      ...formData,
-      cv_url: file?.path || file?.filename || formData.cv_url,
-      cv_filename: file?.originalname || formData.cv_filename,
-    };
-    return this.appService.apply(candidateId, +jobOfferId, applicationData, formData.cv_text);
+  //chayma
+ @UseInterceptors(FileInterceptor('cv', {
+storage: memoryStorage(),
+  
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === 'application/pdf') cb(null, true);
+    else cb(new Error('Seuls les PDF sont acceptés'), false);
+  },
+}))//chayma
+//j'ai modifié tous fonction async apply
+ async apply(
+  @Req() req: any,
+  @Param('jobOfferId') jobOfferId: string,
+  @Body() formData: any,
+  @UploadedFile() file?: Express.Multer.File,
+) {
+  const candidateId = req.user.id;
+   // 🔹 LOGS DE DEBUG (à ajouter temporairement)
+  console.log('📦 [CONTROLLER] Fichier reçu:', {
+    originalname: file?.originalname,
+    mimetype: file?.mimetype,
+    size: file?.size,
+    hasBuffer: !!file?.buffer,
+    bufferLength: file?.buffer?.length
+  });
+   // Sauvegarder le fichier sur disque APRÈS l'analyse ML (optionnel)
+  let savedPath: string | undefined;
+  if (file?.buffer && file?.originalname) {
+    try {
+      // Créer le dossier si n'existe pas
+      mkdirSync('./uploads/cv', { recursive: true });
+      // Générer un nom unique
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      const filename = `cv-${uniqueSuffix}${extname(file.originalname)}`;
+      savedPath = join('./uploads/cv', filename);
+      // Écrire le buffer sur disque
+      writeFileSync(savedPath, file.buffer);
+      console.log('💾 Fichier sauvegardé:', savedPath);
+    } catch (err) {
+      console.error('❌ Erreur sauvegarde fichier:', err);
+    }
   }
+  
+  // Préparer les données de la candidature
+  const applicationData = {
+    ...formData,
+  //  cv_url: file?.path || file?.filename,      // Chemin du fichier sauvegardé
+   // cv_filename: file?.originalname,            // Nom original du fichier
+     cv_url: savedPath || file?.originalname,  // ← Utiliser le chemin sauvegardé
+    cv_filename: file?.originalname,
+  
+  };
+
+  // 🔹 PASSER LE BUFFER AU SERVICE pour l'analyse ML
+  return this.appService.apply(
+    candidateId, 
+    +jobOfferId, 
+    applicationData, 
+    formData.cv_text,    // Texte extrait (optionnel, côté frontend)
+    file?.buffer,        // ← Buffer du fichier pour Flask ML
+    file?.originalname   // ← Nom du fichier pour logs
+  );
+}//j'ai modifié tous fonction async apply
 
   @Get('job-offer/:jobOfferId')
   @UseGuards(AuthGuard('jwt'), RolesGuard)

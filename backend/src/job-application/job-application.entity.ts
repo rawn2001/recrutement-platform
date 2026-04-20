@@ -36,6 +36,26 @@ export class JobApplication {
 
   @Column({ nullable: true })
   matching_details: string;
+  //chayma
+    // ═══════════════════════════════════════════════════
+  // 🔹 CHAMPS ML - Classification & Matching
+  // ═══════════════════════════════════════════════════
+  
+  @Column({ nullable: true })
+  cv_classification: string;
+
+  @Column({ type: 'float', nullable: true })
+  classification_confidence: number;
+
+  @Column({ type: 'jsonb', nullable: true })
+  classification_details: any;
+
+  @Column('text', { array: true, nullable: true })
+  skills_detected: string[];
+
+  @Column({ nullable: true })
+  ml_model_used: string;
+  //chayma
 
   @Column({ default: 'pending' })
   status: string;

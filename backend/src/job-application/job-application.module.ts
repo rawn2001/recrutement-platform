@@ -5,11 +5,14 @@ import { JobApplication } from './job-application.entity';
 import { JobOffer } from '../job-offer/job-offer.entity';  // ✅ Importer JobOffer
 import { JobApplicationService } from './job-application.service';
 import { JobApplicationController } from './job-application.controller';
+// ✅ AJOUTEZ CET IMPORT 👇
+import { MlModule } from '../ml/ml.module';
 
 @Module({
   imports: [
     // ✅ Importer LES DEUX entities pour que les repositories soient disponibles
     TypeOrmModule.forFeature([JobApplication, JobOffer]),
+     MlModule,
   ],
   providers: [JobApplicationService],
   controllers: [JobApplicationController],

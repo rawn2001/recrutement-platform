@@ -224,9 +224,71 @@ export default function ManageJobs() {
                                       </span>
                                     ) : <span style={{ color: 'var(--tx-muted)' }}>—</span>}
                                   </td>
-                                  <td>
-                                    <ScoreBadge score={app.matching_score} />
-                                  </td>
+                               <td>
+  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'center' }}>
+    
+    {/* 🔹 Score IA (existant) */}
+    <ScoreBadge score={app.matching_score} />
+    
+    {/* 🔹 Classification CV (sans confiance) */}
+    {app.cv_classification && (
+      <span style={{ 
+        fontSize: 11, 
+        color: 'var(--tx-muted)',
+        textAlign: 'center',
+        fontWeight: 500
+      }}>
+        🎓 {app.cv_classification}
+      </span>
+    )}
+    
+    {/* 🔹 Compétences détectées (dropdown) */}
+    {app.skills_detected?.length > 0 && (
+      <details style={{ 
+        fontSize: 10, 
+        width: '100%', 
+        maxWidth: '140px'
+      }}>
+        <summary style={{ 
+          cursor: 'pointer', 
+          color: 'var(--primary-light)',
+          textAlign: 'center',
+          listStyle: 'none'
+        }}>
+          ⚡ {app.skills_detected.length} compétences ▼
+        </summary>
+        <div style={{ 
+          background: 'var(--bg-2)', 
+          padding: '8px', 
+          borderRadius: '6px',
+          marginTop: '4px',
+          border: '1px solid var(--border)'
+        }}>
+          {app.skills_detected.slice(0, 5).map((skill, i) => (
+            <span key={i} style={{ 
+              display: 'inline-block',
+              background: 'var(--primary-bg)',
+              color: 'var(--primary-light)',
+              padding: '2px 8px',
+              borderRadius: '4px',
+              fontSize: 9,
+              marginRight: 4,
+              marginBottom: 4
+            }}>
+              {skill}
+            </span>
+          ))}
+          {app.skills_detected.length > 5 && (
+            <span style={{ fontSize: 9, color: 'var(--tx-muted)' }}>
+              +{app.skills_detected.length - 5}
+            </span>
+          )}
+        </div>
+      </details>
+    )}
+    
+  </div>
+</td>
                                   <td>
                                     <StatusPill status={app.status} />
                                   </td>

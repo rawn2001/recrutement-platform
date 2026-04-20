@@ -17,6 +17,8 @@ import { CandidateProfile } from './candidate-profile/candidate-profile.entity';
 import { RecruiterProfile } from './recruiter-profile/recruiter-profile.entity';
 import { JobOffer } from './job-offer/job-offer.entity';
 import { JobApplication } from './job-application/job-application.entity';
+// chayma
+import { MlModule } from './ml/ml.module';//chayma
 
 @Module({
   imports: [
@@ -40,6 +42,7 @@ import { JobApplication } from './job-application/job-application.entity';
     RecruiterProfileModule,
     JobOfferModule,
     JobApplicationModule,
+     MlModule, //chayma
   ],
   controllers: [AppController],
   providers: [],

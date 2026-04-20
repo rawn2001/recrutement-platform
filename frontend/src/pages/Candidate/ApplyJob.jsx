@@ -58,23 +58,42 @@ export default function ApplyJob() {
     e.preventDefault();
     if (!cv) { setMsg('Veuillez uploader votre CV'); setMsgType('error'); return; }
     setApplying(true); setMsg('');
-    try {
-      const token = localStorage.getItem('token');
-      const fd = new FormData();
-      fd.append('cv', cv);
-      fd.append('cover_letter', cover);
-      const res = await axios.post(`${API}/job-applications/apply/${id}`, fd, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setMsg(`✅ Candidature envoyée avec succès ! Score IA : ${res.data.matching_score}%`);
-      setMsgType('success');
-      setTimeout(() => navigate('/candidate/my-applications'), 2000);
-    } catch (err) {
-      setMsg(err.response?.data?.message || 'Erreur lors de l\'envoi');
-      setMsgType('error');
-    } finally {
-      setApplying(false);
-    }
+// Dans la fonction handleApply(), remplacez le bloc try par :
+
+try {
+  const token = localStorage.getItem('token');
+  const fd = new FormData();
+  fd.append('cv', cv);
+  fd.append('cover_letter', cover);
+  
+  // 🔹 Affichez un message d'attente informatif
+  setMsg('⏳ Analyse IA de votre CV en cours... Cela peut prendre 2-5 minutes. Veuillez patienter.');
+  setMsgType('info');
+  
+  const res = await axios.post(`${API}/job-applications/apply/${id}`, fd, {
+    headers: { Authorization: `Bearer ${token}` },
+    // ✅ Timeout explicite pour éviter l'annulation prématurée
+    timeout: 1800000,  // 30 minutes
+  });
+  
+  setMsg(`✅ Candidature envoyée avec succès ! Score IA : ${res.data.matching_score}%`);
+  setMsgType('success');
+  setTimeout(() => navigate('/candidate/my-applications'), 2000);
+  
+} catch (err) {
+  // 🔹 Gestion d'erreur améliorée
+  if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
+    setMsg('⚠️ L\'analyse prend plus de temps que prévu. Votre candidature a été reçue et sera traitée.');
+    setMsgType('warning');
+    // Optionnel : rediriger quand même
+    setTimeout(() => navigate('/candidate/my-applications'), 3000);
+  } else {
+    setMsg(err.response?.data?.message || 'Erreur lors de l\'envoi');
+    setMsgType('error');
+  }
+} finally {
+  setApplying(false);
+}
   };
 
   if (loading) return (
