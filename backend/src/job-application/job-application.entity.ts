@@ -11,7 +11,14 @@ export class JobApplication {
   @ManyToOne(() => User, user => user.applications)
   @JoinColumn({ name: 'candidate_id' })
   candidate: User;
+@Column({ nullable: true })
+quiz_score: number;  // Score du quiz (0-100)
 
+@Column({ nullable: true })
+quiz_session_id: number;  // Lien vers la session
+
+@Column({ nullable: true })
+final_score: number;  // (matching_score + quiz_score) / 2
   @Column({ name: 'candidate_id' })
   candidate_id: number;
 

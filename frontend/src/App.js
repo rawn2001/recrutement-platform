@@ -12,7 +12,7 @@ import Profile from './pages/Profile/Profile';
 // 🔹 Pages Recruteur (séparées)
 import PostJob from './pages/Recruiter/PostJob';
 import ManageJobs from './pages/Recruiter/ManageJobs';
-
+import QuizPage from './pages/Candidate/QuizPage';
 // 🔹 Pages Candidat (séparées)
 import FindJobs from './pages/Candidate/FindJobs';
 import ApplyJob from './pages/Candidate/ApplyJob';
@@ -38,7 +38,7 @@ export default function App() {
         <Route path="/complete-profile" element={<CompleteProfile />} />
         {/* 🎯 Dashboard Hub */}
         <Route path="/dashboard" element={<Dashboard />} />
-        
+        <Route path="/quiz/:jobId" element={<QuizPage />} />
         {/* 🔹 Recruteur - Pages séparées */}
         <Route path="/recruiter/post" element={<PostJob />} />
         <Route path="/recruiter/manage" element={<ManageJobs />} />

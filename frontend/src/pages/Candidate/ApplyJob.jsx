@@ -76,9 +76,20 @@ try {
     timeout: 1800000,  // 30 minutes
   });
   
-  setMsg(`✅ Candidature envoyée avec succès ! Score IA : ${res.data.matching_score}%`);
-  setMsgType('success');
-  setTimeout(() => navigate('/candidate/my-applications'), 2000);
+  // Dans handleApply(), après le succès :
+setMsg(`✅ Candidature envoyée avec succès ! Score CV : ${res.data.matching_score}%`);
+setMsgType('success');
+
+// ✅✅✅ REDIRECTION AUTOMATIQUE VERS LE QUIZ ✅✅✅
+setTimeout(() => {
+  navigate(`/quiz/${id}`, { 
+    state: { 
+      cvScore: res.data.matching_score,
+      jobTitle: offer.title,
+      skills: offer.required_skills 
+    } 
+  });
+}, 1500); // Attend 1.5s pour que l'utilisateur voie le message
   
 } catch (err) {
   // 🔹 Gestion d'erreur améliorée

@@ -19,7 +19,8 @@ import { JobOffer } from './job-offer/job-offer.entity';
 import { JobApplication } from './job-application/job-application.entity';
 // chayma
 import { MlModule } from './ml/ml.module';//chayma
-
+import { QuizModule } from './quiz/quiz.module';
+import { QuizSession } from './quiz/entities/quiz-session.entity';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
@@ -31,7 +32,7 @@ import { MlModule } from './ml/ml.module';//chayma
       username: process.env.DB_USER,
       password: process.env.DB_PASS,
       database: process.env.DB_NAME,
-      entities: [User, CandidateProfile, RecruiterProfile, JobOffer, JobApplication],
+      entities: [User, CandidateProfile, RecruiterProfile, JobOffer, JobApplication , QuizSession],
       synchronize: true,
       ssl: { rejectUnauthorized: false },
       extra: { ssl: { rejectUnauthorized: false } },
@@ -41,6 +42,7 @@ import { MlModule } from './ml/ml.module';//chayma
     CandidateProfileModule,
     RecruiterProfileModule,
     JobOfferModule,
+    QuizModule,
     JobApplicationModule,
      MlModule, //chayma
   ],
