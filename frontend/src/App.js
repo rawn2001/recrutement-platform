@@ -26,9 +26,15 @@ import ResetPassword from './pages/Auth/ResetPassword';
 import { SocketContextProvider } from './context/SocketContext';
 import CallNotification from './components/VideoCall/CallNotification';
 import GlobalVideoCall from './components/VideoCall/GlobalVideoCall';
+
+import TalentBot from './components/ChatBot/TalentBot';
+
 // Routes
 export default function App() {
   return (
+    
+    <>
+    
     <SocketContextProvider>
       {/* ─── Overlays globaux (visibles sur toutes les pages) ─────────────── */}
       {/* Sonnerie d'appel entrant */}
@@ -65,5 +71,6 @@ export default function App() {
       </Routes>
     </BrowserRouter>
     </SocketContextProvider>
+    </>
   );
 }
