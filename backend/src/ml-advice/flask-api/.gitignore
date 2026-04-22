@@ -1,4 +1,6 @@
 saved_model/
+uploads/
 *.pkl
 *.h5
 *.pt
+*.pdf

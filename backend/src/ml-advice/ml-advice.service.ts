@@ -5,7 +5,7 @@ import FormData from 'form-data';
 
 @Injectable()
 export class MlAdviceService {
-  private readonly flaskUrl = process.env.FLASK_API_URL || 'http://localhost:5000';
+  private readonly flaskUrl = process.env.FLASK_API_URL || 'http://localhost:5002';
 
   async analyzeCv(cvBuffer: Buffer, filename: string, jobText?: string) {  // ← ✅ jobText optionnel
     const formData = new FormData();
