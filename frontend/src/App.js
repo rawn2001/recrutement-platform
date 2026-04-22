@@ -22,10 +22,19 @@ import './assets/auth.css';
 // Imports
 import ForgotPassword from './pages/Auth/ForgotPassword';
 import ResetPassword from './pages/Auth/ResetPassword';
-
+// 🎥 VIDEO CALL
+import { SocketContextProvider } from './context/SocketContext';
+import CallNotification from './components/VideoCall/CallNotification';
+import GlobalVideoCall from './components/VideoCall/GlobalVideoCall';
 // Routes
 export default function App() {
   return (
+    <SocketContextProvider>
+      {/* ─── Overlays globaux (visibles sur toutes les pages) ─────────────── */}
+      {/* Sonnerie d'appel entrant */}
+      <CallNotification />
+      {/* Fenêtre vidéo flottante — s'ouvre dès qu'un appel est actif */}
+      <GlobalVideoCall />
     <BrowserRouter>
       <Routes>
         {/* 🏠 Pages publiques */}
@@ -38,6 +47,7 @@ export default function App() {
         <Route path="/complete-profile" element={<CompleteProfile />} />
         {/* 🎯 Dashboard Hub */}
         <Route path="/dashboard" element={<Dashboard />} />
+
         <Route path="/quiz/:jobId" element={<QuizPage />} />
         {/* 🔹 Recruteur - Pages séparées */}
         <Route path="/recruiter/post" element={<PostJob />} />
@@ -54,5 +64,6 @@ export default function App() {
 <Route path="/reset-password" element={<ResetPassword />} />
       </Routes>
     </BrowserRouter>
+    </SocketContextProvider>
   );
 }

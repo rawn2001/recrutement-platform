@@ -4,6 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import '../../pages/Dashboard/Dashboard.css';
 
+// 🎥 VIDEO CALL
+import VideoCallButton from '../../components/VideoCall/VideoCallButton';
+
 const API = 'http://localhost:3000';
 
 /* ── SIDEBAR (design amélioré) ── */
@@ -604,7 +607,6 @@ export default function ManageJobs() {
                             {/* Scrollable Table */}
                             <div style={{
                               maxHeight: 420, overflowY: 'auto',
-                              // Scrollbar styling
                               scrollbarWidth: 'thin',
                               scrollbarColor: 'var(--border) transparent',
                             }}>
@@ -617,7 +619,7 @@ export default function ManageJobs() {
                               
                               <table className="candidates-table" style={{
                                 width: '100%', borderCollapse: 'collapse',
-                                fontSize: 13, minWidth: 850,
+                                fontSize: 13, minWidth: 950,
                               }}>
                                 <thead style={{ position: 'sticky', top: 0, zIndex: 1, background: 'var(--bg)' }}>
                                   <tr style={{ borderBottom: '1px solid var(--border)' }}>
@@ -752,7 +754,6 @@ export default function ManageJobs() {
                                                 <summary style={{
                                                   cursor: 'pointer', color: 'var(--primary)',
                                                   fontWeight: 500, listStyle: 'none',
-                                                  '&::-webkit-details-marker': { display: 'none' },
                                                 }}>
                                                   ⚡ {app.skills_detected.length} compétences ▼
                                                 </summary>
@@ -815,6 +816,9 @@ export default function ManageJobs() {
                                                 onClick={() => updateStatus(app.id, 'interview')} 
                                               />
                                             )}
+
+                                            {/* 🎥 BOUTON APPEL VIDÉO */}
+                                            <VideoCallButton candidate={app.candidate} />
                                           </div>
                                         </td>
 
