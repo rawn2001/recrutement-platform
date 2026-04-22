@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import '../../pages/Dashboard/Dashboard.css';
-
 const API = 'http://localhost:3000';
 
 function DashSidebar({ navigate }) {
@@ -46,7 +45,7 @@ export default function ApplyJob() {
   const [applying, setApplying] = useState(false);
   const [msg, setMsg] = useState('');
   const [msgType, setMsgType] = useState('');
-
+// Dans le composant ApplyJob(), avec les autres useState :
   useEffect(() => {
     axios.get(`${API}/job-offers/${id}`)
       .then(res => setOffer(res.data))

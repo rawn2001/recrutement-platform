@@ -21,6 +21,7 @@ import { JobApplication } from './job-application/job-application.entity';
 import { MlModule } from './ml/ml.module';//chayma
 import { QuizModule } from './quiz/quiz.module';
 import { QuizSession } from './quiz/entities/quiz-session.entity';
+import { MlAdviceModule } from './ml-advice/ml-advice.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
@@ -39,6 +40,7 @@ import { QuizSession } from './quiz/entities/quiz-session.entity';
     }),
     AuthModule,
     UsersModule,
+    MlAdviceModule,
     CandidateProfileModule,
     RecruiterProfileModule,
     JobOfferModule,
