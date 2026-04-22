@@ -17,9 +17,9 @@ app = Flask(__name__)
 
 # Configuration CORS pour autoriser le frontend React
 CORS(app, origins=[
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://172.28.32.1:3000",
+    "http://localhost:3001",
+    "http://127.0.0.1:3001",
+    "http://172.28.32.1:3001",
 ])
 
 # ─── Configuration Gemini ────────────────────────────────────────────────────

@@ -201,6 +201,6 @@ def predict():
         "matched_skills": len(presents)
     })
 
+# ✅ APRÈS (port fixe 5002) :
 if __name__ == '__main__':
-    port = int(os.environ.get('FLASK_PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=True, use_reloader=False)
+    app.run(host='0.0.0.0', port=5002, debug=True, use_reloader=False)
