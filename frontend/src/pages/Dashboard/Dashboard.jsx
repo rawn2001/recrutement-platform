@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import './Dashboard.css';
 import logo from '../../assets/logo.png';
+import TalentBot from '../../components/ChatBot/TalentBot';
 
 const API = 'http://localhost:3000';
 
@@ -97,6 +98,7 @@ function Sidebar({ user, activePath, navigate, onLogout }) {
 
   return (
     <aside className="dash-sidebar">
+      <TalentBot />
       <div className="dash-sidebar-top">
         <div className="dash-logo">
           <img
