@@ -1,0 +1,4 @@
+[core]
+    remote = talentsphere-models
+['remote "talentsphere-models"']
+    url = C:\Users\haz3m\DVCStorage
