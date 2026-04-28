@@ -41,9 +41,7 @@ export default function Home() {
 
         <div className="nav-pill">
           <button className="npill-item active">Accueil</button>
-          <button className="npill-item" onClick={() => navigate('/offres')}>Offres</button>
-          <button className="npill-item" onClick={() => navigate('/entreprises')}>Entreprises</button>
-          <button className="npill-item" onClick={() => navigate('/about')}>À propos</button>
+      
         </div>
 
         <div className="nav-right">

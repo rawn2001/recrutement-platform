@@ -1,0 +1,236 @@
+/* ── Bouton croix de fermeture ───────────────────────────── */
+.report-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid var(--border, #e2e8f0);
+  background: var(--card-bg, #fff);
+  color: var(--tx-muted, #64748b);
+  font-size: 18px;
+  font-weight: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 10;
+  line-height: 1;
+  padding: 0;
+}
+
+.report-close:hover {
+  background: var(--rose, #ef4444);
+  color: #fff;
+  border-color: var(--rose, #ef4444);
+  transform: rotate(90deg);
+}
+
+.report-close:focus {
+  outline: 2px solid var(--primary, #667eea);
+  outline-offset: 2px;
+}
+
+/* ── Overlay clickable ───────────────────────────── */
+.report-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.7);  /* Overlay plus sombre */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+  padding: 20px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ── Contenu du rapport ───────────────────────────── */
+.report-content {
+  background: var(--card-bg, #fff);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;  /* Pour positionner la croix en absolute */
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── En-tête avec padding pour la croix ───────────────────────────── */
+.report-header {
+  padding: 24px 48px 20px 24px;  /* Padding right plus grand pour la croix */
+  background: linear-gradient(135deg, var(--primary, #667eea) 0%, var(--primary-dark, #556cd6) 100%);
+  color: white;
+  border-radius: 16px 16px 0 0;
+  position: relative;
+}
+
+.report-header h2 {
+  margin: 0 0 8px 0;
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+
+.candidate-name {
+  margin: 0;
+  opacity: 0.95;
+  font-size: 1.05rem;
+  font-weight: 500;
+}
+
+.session-id {
+  margin: 6px 0 0 0;
+  font-size: 0.8rem;
+  opacity: 0.8;
+  font-family: monospace;
+  letter-spacing: 0.5px;
+}
+
+/* ── Sections ───────────────────────────── */
+.report-section {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border-soft, #f1f5f9);
+}
+
+.report-section:last-child {
+  border-bottom: none;
+}
+
+.report-section h3 {
+  margin: 0 0 14px 0;
+  font-size: 1.05rem;
+  color: var(--tx, #1e293b);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+/* ── Footer ───────────────────────────── */
+.report-footer {
+  padding: 16px 24px 24px;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  background: var(--bg-soft, #f8fafc);
+  border-radius: 0 0 16px 16px;
+}
+
+.btn-primary, .btn-secondary {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary, #667eea) 0%, var(--primary-dark, #556cd6) 100%);
+  color: white;
+  box-shadow: 0 4px 14px rgba(102, 126, 234, 0.4);
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+
+.btn-secondary {
+  background: var(--bg-2, #e2e8f0);
+  color: var(--tx, #1e293b);
+}
+
+.btn-secondary:hover {
+  background: var(--border, #cbd5e1);
+  transform: translateY(-1px);
+}
+
+/* ── Responsive ───────────────────────────── */
+@media (max-width: 640px) {
+  .report-content {
+    max-width: 100%;
+    margin: 10px;
+  }
+  
+  .report-header {
+    padding: 20px 44px 16px 20px;
+  }
+  
+  .report-header h2 {
+    font-size: 1.2rem;
+  }
+  
+  .metrics-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .report-footer {
+    flex-direction: column-reverse;
+  }
+  
+  .btn-primary, .btn-secondary {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* ── Accessibilité ───────────────────────────── */
+.report-close:focus-visible,
+.btn-primary:focus-visible,
+.btn-secondary:focus-visible {
+  outline: 2px solid var(--primary, #667eea);
+  outline-offset: 2px;
+}
+
+/* ── Spinner de chargement ───────────────────────────── */
+.report-loading, .report-error {
+  text-align: center;
+  padding: 40px 24px;
+  color: var(--tx-muted, #64748b);
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border, #e2e8f0);
+  border-top-color: var(--primary, #667eea);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 16px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.report-error {
+  color: var(--rose, #ef4444);
+}
+
+.report-error button {
+  margin-top: 16px;
+}

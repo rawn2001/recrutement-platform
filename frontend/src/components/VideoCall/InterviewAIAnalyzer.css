@@ -1,0 +1,151 @@
+/* src/components/VideoCall/InterviewAIAnalyzer.css */
+
+.ai-analyzer-overlay {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 280px;
+  background: rgba(15, 15, 26, 0.95);
+  border: 1px solid #333355;
+  border-radius: 12px;
+  padding: 12px;
+  color: white;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 12px;
+  z-index: 1000;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.ai-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: #2a2a4a;
+  border-radius: 20px;
+  font-weight: 500;
+  margin-bottom: 12px;
+}
+
+.ai-status.active {
+  background: linear-gradient(135deg, #4CAF50, #45a049);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+.ai-score-card {
+  text-align: center;
+  padding: 10px;
+  background: rgba(26, 26, 46, 0.8);
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.ai-score-label {
+  color: #aaa;
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+
+.ai-score-value {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 6px;
+}
+
+.ai-score-bar {
+  height: 6px;
+  background: #333;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.ai-score-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.ai-details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.ai-detail-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 4px;
+  background: rgba(26, 26, 46, 0.5);
+  border-radius: 6px;
+}
+
+.ai-detail-icon {
+  font-size: 18px;
+  margin-bottom: 4px;
+}
+
+.ai-detail-label {
+  color: #888;
+  font-size: 10px;
+}
+
+.ai-detail-value {
+  font-weight: 600;
+  color: white;
+  font-size: 11px;
+}
+
+.ai-timeline {
+  border-top: 1px solid #333355;
+  padding-top: 10px;
+}
+
+.ai-timeline-label {
+  color: #aaa;
+  font-size: 10px;
+  margin-bottom: 6px;
+}
+
+.ai-timeline-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 40px;
+}
+
+.ai-timeline-bar {
+  flex: 1;
+  min-width: 4px;
+  border-radius: 2px 2px 0 0;
+  transition: height 0.2s ease;
+}
+
+.ai-error {
+  margin-top: 8px;
+  padding: 6px;
+  background: rgba(244, 67, 54, 0.2);
+  border: 1px solid #F44336;
+  border-radius: 4px;
+  color: #FFB3B3;
+  font-size: 11px;
+}
+
+/* Responsive mobile */
+@media (max-width: 768px) {
+  .ai-analyzer-overlay {
+    top: auto;
+    bottom: 80px;
+    right: 10px;
+    left: 10px;
+    width: auto;
+    max-width: none;
+  }
+}

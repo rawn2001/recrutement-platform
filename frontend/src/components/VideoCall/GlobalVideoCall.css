@@ -5,19 +5,37 @@
   position: fixed;
   bottom: 24px;
   right: 24px;
-  width: 420px;
+  width: 800px;              /* ✅ Augmenté de 420px → 800px */
+  max-width: 92vw;           /* ✅ Évite de déborder sur petits écrans */
   background: #0f172a;
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255,255,255,0.06);
-  z-index: 9998;       /* sous CallNotification (9999) mais au-dessus de tout le reste */
+  z-index: 9998;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  transition: width 0.2s, height 0.2s;
+  transition: width 0.3s ease, height 0.3s ease;
 }
 
+/* Mode minimisé */
 .gvc-window.gvc-minimized {
-  width: 220px;
+  width: 240px;
+  height: auto;
+}
+
+/* ✅ Mode étendu (activable via état React si besoin) */
+.gvc-window.gvc-expanded {
+  width: 95vw;
+  height: 90vh;
+  max-width: none;
+  bottom: 5vh;
+  right: 2.5vw;
+  border-radius: 12px;
+}
+.gvc-window.gvc-expanded .gvc-streams {
+  aspect-ratio: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 /* ─── Barre de titre ─────────────────────────────────────────────────────── */
@@ -25,7 +43,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 14px;
+  padding: 12px 16px;
   background: #1e293b;
   border-bottom: 1px solid rgba(255,255,255,0.06);
   cursor: default;
@@ -36,7 +54,7 @@
   align-items: center;
   gap: 8px;
   color: #e2e8f0;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
 }
 
@@ -58,9 +76,9 @@
   border: none;
   color: #94a3b8;
   cursor: pointer;
-  font-size: 12px;
-  padding: 2px 6px;
-  border-radius: 4px;
+  font-size: 13px;
+  padding: 4px 8px;
+  border-radius: 6px;
   transition: color 0.15s, background 0.15s;
 }
 .gvc-minimize-btn:hover { color: #fff; background: rgba(255,255,255,0.08); }
@@ -72,6 +90,7 @@
   aspect-ratio: 16 / 9;
   background: #020617;
   overflow: hidden;
+  min-height: 320px;       /* ✅ Hauteur minimale garantie */
 }
 
 /* Vidéo distante : remplit toute la zone */
@@ -85,14 +104,16 @@
 /* Vignette locale : coin bas-droite */
 .gvc-local-wrap {
   position: absolute;
-  bottom: 10px;
-  right: 10px;
-  width: 100px;
-  border-radius: 8px;
+  bottom: 12px;
+  right: 12px;
+  width: 160px;            /* ✅ Augmenté de 100px → 160px */
+  border-radius: 10px;
   overflow: hidden;
   border: 2px solid #6c63ff;
   box-shadow: 0 4px 12px rgba(0,0,0,0.4);
   z-index: 2;
+  transition: width 0.2s ease;
+  background: #1e293b;     /* Fond si la caméra est coupée */
 }
 
 .gvc-local-wrap video {
@@ -111,7 +132,7 @@
   justify-content: center;
   gap: 16px;
   color: #64748b;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .gvc-pulse {
@@ -133,38 +154,47 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  padding: 12px;
+  gap: 14px;
+  padding: 14px;
   background: #0f172a;
+  border-top: 1px solid rgba(255,255,255,0.06);
 }
 
 .gvc-btn {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
   border: none;
-  border-radius: 999px;
+  border-radius: 50%;
   background: rgba(255, 255, 255, 0.1);
   color: #fff;
-  font-size: 13px;
+  font-size: 18px;
   cursor: pointer;
-  transition: background 0.2s;
-  white-space: nowrap;
+  transition: background 0.2s, transform 0.15s;
 }
 
-.gvc-btn:hover { background: rgba(255, 255, 255, 0.18); }
+.gvc-btn:hover { background: rgba(255, 255, 255, 0.18); transform: scale(1.05); }
 
 .gvc-btn-off {
   background: rgba(239, 68, 68, 0.2);
   color: #fca5a5;
 }
 
+/* Bouton rouge "Terminer" plus large et lisible */
 .gvc-btn-end {
+  width: auto;
+  padding: 0 20px;
+  height: 48px;
+  border-radius: 24px;
   background: #ef4444;
   font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.3px;
 }
-.gvc-btn-end:hover { background: #dc2626; }
+.gvc-btn-end:hover { background: #dc2626; transform: scale(1.03); }
 
 /* ─── Message fin d'appel ────────────────────────────────────────────────── */
 .gvc-ended {
@@ -191,6 +221,21 @@
 }
 
 /* ─── Responsive ─────────────────────────────────────────────────────────── */
-@media (max-width: 500px) {
-  .gvc-window { width: calc(100vw - 32px); right: 16px; bottom: 16px; }
+@media (max-width: 900px) {
+  .gvc-window { width: 90vw; right: 5vw; }
+  .gvc-local-wrap { width: 130px; }
+}
+
+@media (max-width: 600px) {
+  .gvc-window { 
+    width: calc(100vw - 24px); 
+    right: 12px; 
+    bottom: 12px; 
+    border-radius: 12px; 
+  }
+  .gvc-streams { min-height: 260px; }
+  .gvc-local-wrap { width: 100px; bottom: 10px; right: 10px; }
+  .gvc-controls { gap: 10px; padding: 12px; }
+  .gvc-btn { width: 42px; height: 42px; font-size: 16px; }
+  .gvc-btn-end { padding: 0 16px; font-size: 13px; }
 }

@@ -17,11 +17,18 @@ import { CandidateProfile } from './candidate-profile/candidate-profile.entity';
 import { RecruiterProfile } from './recruiter-profile/recruiter-profile.entity';
 import { JobOffer } from './job-offer/job-offer.entity';
 import { JobApplication } from './job-application/job-application.entity';
+
 // chayma
-import { MlModule } from './ml/ml.module';//chayma
+import { MlModule } from './ml/ml.module';
 import { QuizModule } from './quiz/quiz.module';
 import { QuizSession } from './quiz/entities/quiz-session.entity';
 import { MlAdviceModule } from './ml-advice/ml-advice.module';
+import { InterviewSchedulingModule } from './interview-scheduling/interview-scheduling.module';
+import { InterviewModule } from './interview/interview.module';
+
+// ✅ AJOUTER: Importer l'entité InterviewReport
+import { InterviewReport } from './interview/entities/interview-report.entity';
+
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
@@ -33,8 +40,19 @@ import { MlAdviceModule } from './ml-advice/ml-advice.module';
       username: process.env.DB_USER,
       password: process.env.DB_PASS,
       database: process.env.DB_NAME,
-      entities: [User, CandidateProfile, RecruiterProfile, JobOffer, JobApplication , QuizSession],
-      synchronize: true,
+      
+      // ✅ AJOUTER InterviewReport dans la liste des entities
+      entities: [
+        User, 
+        CandidateProfile, 
+        RecruiterProfile, 
+        JobOffer, 
+        JobApplication,
+        QuizSession,
+        InterviewReport,  // ✅ ← Ajouté ici !
+      ],
+      
+      synchronize: true,  // ✅ Crée la table automatiquement (DEV ONLY)
       ssl: { rejectUnauthorized: false },
       extra: { ssl: { rejectUnauthorized: false } },
     }),
@@ -44,9 +62,11 @@ import { MlAdviceModule } from './ml-advice/ml-advice.module';
     CandidateProfileModule,
     RecruiterProfileModule,
     JobOfferModule,
+    InterviewSchedulingModule,
     QuizModule,
+    InterviewModule,
     JobApplicationModule,
-     MlModule, //chayma
+    MlModule,
   ],
   controllers: [AppController],
   providers: [],

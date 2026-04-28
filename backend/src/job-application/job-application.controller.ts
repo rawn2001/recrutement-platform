@@ -115,6 +115,6 @@ storage: memoryStorage(),
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('recruteur')
   async updateStatus(@Req() req: any, @Param('id') id: string, @Body() body: { status: string }) {
-    return this.appService.updateStatus(+id, req.user.id, body.status);
+    return this.appService.updateStatus(+id, req.user.id, body); 
   }
 }

@@ -10,7 +10,8 @@ if (typeof window !== 'undefined' && !window.process) {
 }
 
 const SOCKET_URL = process.env.REACT_APP_SOCKET_URL || 'http://localhost:3333';
-
+// En haut de SocketContext.jsx, après les imports :
+const generateSessionId = () => `session_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
 export const SocketContext = createContext(null);
 
 export const SocketContextProvider = ({ children }) => {
@@ -153,118 +154,129 @@ export const SocketContextProvider = ({ children }) => {
 
   // Appelé quand on reçoit un signal webrtcSignal du serveur
   const completePeerConnection = useCallback((connectionData) => {
-    const stream = localStreamRef.current;
-    const existing = peerRef.current;
+  const stream = localStreamRef.current;
+  const existing = peerRef.current;
+  
+  // ✅ Récupérer sessionId depuis connectionData
+  const sessionId = connectionData.ongoingCall?.sessionId;
 
-    // Cas A : notre peer existe déjà → on lui passe juste le signal (ICE ou réponse)
-    if (existing?.peerConnection && !existing.peerConnection.destroyed) {
-      try {
-        existing.peerConnection.signal(connectionData.sdp);
-      } catch (err) {
-        console.warn('signal() ignoré (peer détruit):', err.message);
-      }
-      return;
+  // Cas A : notre peer existe déjà → on lui passe juste le signal
+  if (existing?.peerConnection && !existing.peerConnection.destroyed) {
+    try {
+      existing.peerConnection.signal(connectionData.sdp);
+    } catch (err) {
+      console.warn('signal() ignoré (peer détruit):', err.message);
     }
+    return;
+  }
 
-    // Cas B : on n'a pas encore de peer → on est le RECRUTEUR qui reçoit l'offre du candidat
-    // On crée un peer NON-initiateur pour répondre
-    if (!stream) {
-      console.warn('completePeerConnection: pas de stream local');
-      return;
+  if (!stream) {
+    console.warn('completePeerConnection: pas de stream local');
+    return;
+  }
+
+  const p = makePeer(stream, false);
+  if (!p) return;
+
+  const sock = socketRef.current;
+  p.on('signal', (sdpData) => {
+    if (sock) {
+      sock.emit('webrtcSignal', {
+        sdp: sdpData,
+        ongoingCall: { ...connectionData.ongoingCall, sessionId }, // ✅ Propager sessionId
+        isCaller: true,
+      });
     }
+  });
 
-    const p = makePeer(stream, false); // false = répondeur
-    if (!p) return;
+  const participantUser = connectionData.isCaller
+    ? connectionData.ongoingCall.participants?.receiver
+    : connectionData.ongoingCall.participants?.caller;
 
-    const sock = socketRef.current;
-    p.on('signal', (sdpData) => {
-      if (sock) {
-        sock.emit('webrtcSignal', {
-          sdp: sdpData,
-          ongoingCall: connectionData.ongoingCall,
-          isCaller: true, // on répond au caller (candidat), donc isCaller=true pour la cible
-        });
-      }
-    });
+  const newPeerData = { peerConnection: p, participantUser, stream: undefined };
+  setPeer(newPeerData);
+  peerRef.current = newPeerData;
 
-    // Déterminer qui est l'autre participant
-    const participantUser = connectionData.isCaller
-      ? connectionData.ongoingCall.participants.receiver
-      : connectionData.ongoingCall.participants.caller;
+  try { p.signal(connectionData.sdp); }
+  catch (err) { console.warn('signal initial:', err.message); }
 
-    const newPeerData = { peerConnection: p, participantUser, stream: undefined };
-    setPeer(newPeerData);
-    peerRef.current = newPeerData;
-
-    // Appliquer l'offre reçue
-    try { p.signal(connectionData.sdp); }
-    catch (err) { console.warn('signal initial:', err.message); }
-
-  }, [makePeer]);
+}, [makePeer]);
 
   // ─── Candidat accepte l'appel ────────────────────────────────────────────
   const handleJoinCall = useCallback(async (call) => {
-    setIsCallEnded(false);
-    setOngoingCall((prev) => prev ? { ...prev, isRinging: false } : prev);
+  setIsCallEnded(false);
+  
+  // ✅ Conserver sessionId s'il existe
+  const sessionId = call.sessionId || ongoingCallRef.current?.sessionId;
+  setOngoingCall((prev) => prev ? { ...prev, isRinging: false, sessionId } : { ...call, isRinging: false, sessionId });
 
-    const stream = await getMediaStream();
-    if (!stream) return;
+  const stream = await getMediaStream();
+  if (!stream) return;
 
-    // Candidat = INITIATEUR (envoie l'offre au recruteur)
-    const p = makePeer(stream, true);
-    if (!p) return;
+  // Candidat = INITIATEUR (envoie l'offre au recruteur)
+  const p = makePeer(stream, true);
+  if (!p) return;
 
-    const sock = socketRef.current;
-    p.on('signal', (sdpData) => {
-      if (sock) {
-        sock.emit('webrtcSignal', {
-          sdp: sdpData,
-          ongoingCall: call,
-          isCaller: false, // ce signal est destiné au recruteur (caller)
-        });
-      }
-    });
+  const sock = socketRef.current;
+  p.on('signal', (sdpData) => {
+    if (sock) {
+      sock.emit('webrtcSignal', {
+        sdp: sdpData,
+        ongoingCall: { ...call, sessionId }, // ✅ Passer sessionId dans le signal
+        isCaller: false,
+      });
+    }
+  });
 
-    const newPeerData = {
-      peerConnection: p,
-      participantUser: call.participants.caller,
-      stream: undefined,
-    };
-    setPeer(newPeerData);
-    peerRef.current = newPeerData;
-  }, [getMediaStream, makePeer]);
+  const newPeerData = {
+    peerConnection: p,
+    participantUser: call.participants?.caller || call.caller,
+    stream: undefined,
+  };
+  setPeer(newPeerData);
+  peerRef.current = newPeerData;
+}, [getMediaStream, makePeer]);
 
   // ─── Recruteur lance l'appel ─────────────────────────────────────────────
   const handleCall = useCallback(async (targetUser) => {
-    if (!PeerClass.current) { alert('Chargement en cours, réessayez.'); return; }
-    setIsCallEnded(false);
-    if (!currentSocketUser) return;
-    if (ongoingCallRef.current) { alert('Déjà en communication.'); return; }
+  if (!PeerClass.current) { alert('Chargement en cours, réessayez.'); return; }
+  setIsCallEnded(false);
+  if (!currentSocketUser) return;
+  if (ongoingCallRef.current) { alert('Déjà en communication.'); return; }
 
-    const stream = await getMediaStream();
-    if (!stream) return;
+  const stream = await getMediaStream();
+  if (!stream) return;
 
-    const participants = { caller: currentSocketUser, receiver: targetUser };
-    setOngoingCall({ participants, isRinging: false });
-    ongoingCallRef.current = { participants, isRinging: false };
-    socketRef.current?.emit('call', participants);
+  const participants = { caller: currentSocketUser, receiver: targetUser };
+  
+  // ✅ GÉNÉRER sessionId et l'ajouter à ongoingCall
+  const sessionId = generateSessionId();
+  setOngoingCall({ participants, isRinging: false, sessionId });
+  ongoingCallRef.current = { participants, isRinging: false, sessionId };
+  
+  // ✅ Envoyer sessionId au serveur via socket
+  socketRef.current?.emit('call', { ...participants, sessionId });
 
-    // Le recruteur attend que le candidat envoie l'offre via webrtcSignal
-    // Il ne crée PAS de peer ici — il le crée dans completePeerConnection
-  }, [currentSocketUser, getMediaStream]);
+  // Le recruteur attend que le candidat envoie l'offre via webrtcSignal
+}, [currentSocketUser, getMediaStream]);
 
   // ─── Appel entrant (candidat reçoit la sonnerie) ─────────────────────────
-  const onIncomingCall = useCallback((participants) => {
-    if (ongoingCallRef.current) {
-      // Déjà en appel → refus automatique
-      socketRef.current?.emit('hangup', {
-        ongoingCall: { participants, isRinging: false },
-        userHangingupId: currentUserRef.current?.id || currentUserRef.current?.userId,
-      });
-      return;
-    }
-    setOngoingCall({ participants, isRinging: true });
-  }, []);
+  const onIncomingCall = useCallback((data) => {
+  // data peut être { participants, sessionId } ou juste participants
+  const participants = data.participants || data;
+  const sessionId = data.sessionId; // ✅ Récupérer sessionId si présent
+  
+  if (ongoingCallRef.current) {
+    socketRef.current?.emit('hangup', {
+      ongoingCall: { participants, isRinging: false, sessionId },
+      userHangingupId: currentUserRef.current?.id || currentUserRef.current?.userId,
+    });
+    return;
+  }
+  
+  // ✅ Ajouter sessionId à ongoingCall
+  setOngoingCall({ participants, isRinging: true, sessionId });
+}, []);
 
   // ─── Init socket ──────────────────────────────────────────────────────────
   useEffect(() => {

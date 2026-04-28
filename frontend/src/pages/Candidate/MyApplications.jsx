@@ -131,6 +131,10 @@ export default function MyApplications() {
                 {apps.map((a, idx) => {
                   const meta = STATUS_META[a.status] || { label: a.status, cls: 'status-pending' };
                   const score = a.matching_score || 0;
+                  
+                  // ✅ CORRECTION : Gérer scheduledAt (camelCase) ET scheduled_at (snake_case)
+                  const interviewDate = a.scheduledAt || a.scheduled_at;
+                  
                   return (
                     <div
                       className="app-card"
@@ -163,7 +167,35 @@ export default function MyApplications() {
                           <div className={`score-badge ${scoreClass(score)}`}>{score}%</div>
                           <div className="score-label">Score IA</div>
                         </div>
-                        <span className={`status-pill ${meta.cls}`}>{meta.label}</span>
+                        
+                        {/* ✅ AFFICHAGE DATE ENTRETIEN — CORRIGÉ */}
+                        {a.status === 'interview' ? (
+                          interviewDate ? (
+                            <div style={{
+                              background: 'var(--primary-bg)', color: 'var(--primary)',
+                              padding: '8px 12px', borderRadius: 10, fontSize: 12, fontWeight: 600,
+                              display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4,
+                              border: '1px solid var(--primary-light)'
+                            }}>
+                              <span style={{ fontSize: 10, opacity: 0.8 }}>📅 Entretien</span>
+                              <span>
+                                {new Date(interviewDate).toLocaleString('fr-FR', {
+                                  day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+                                })}
+                              </span>
+                            </div>
+                          ) : (
+                            <div style={{
+                              background: 'var(--amber-bg)', color: 'var(--amber)',
+                              padding: '8px 12px', borderRadius: 10, fontSize: 12, fontWeight: 600,
+                              border: '1px solid var(--amber-light)'
+                            }}>
+                              ⏳ En attente
+                            </div>
+                          )
+                        ) : (
+                          <span className={`status-pill ${meta.cls}`}>{meta.label}</span>
+                        )}
                       </div>
                     </div>
                   );

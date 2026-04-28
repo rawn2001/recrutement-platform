@@ -6,6 +6,13 @@
 import { useSocket } from '../../context/SocketContext';
 import './VideoCall.css';
 
+// ✅ Fonction utilitaire : génère un sessionId UNIQUE à chaque entretien
+const generateSessionId = () => {
+  const timestamp = Date.now();
+  const random = Math.random().toString(36).substring(2, 10);
+  return `session_${timestamp}_${random}`;
+};
+
 const VideoCallButton = ({ candidate }) => {
   const { onlineUsers, handleCall, ongoingCall } = useSocket();
 
@@ -30,7 +37,13 @@ const VideoCallButton = ({ candidate }) => {
       alert('Vous êtes déjà en communication.');
       return;
     }
-    handleCall(targetUser);
+    
+    // ✅ Générer un NOUVEAU sessionId pour CET entretien
+    const newSessionId = generateSessionId();
+    console.log('🆕 Nouvel entretien démarré | sessionId:', newSessionId);
+    
+    // ✅ Passer le sessionId au contexte Socket via options
+    handleCall(targetUser, { sessionId: newSessionId });
   };
 
   return (
@@ -38,9 +51,35 @@ const VideoCallButton = ({ candidate }) => {
       className="vc-start-btn"
       onClick={handleClick}
       title={isOnline ? 'Lancer l\'entretien vidéo' : 'Candidat hors ligne'}
-      style={{ opacity: isOnline ? 1 : 0.5 }}
+      style={{ 
+        opacity: isOnline ? 1 : 0.5,
+        padding: '6px 14px',
+        borderRadius: 8,
+        fontSize: 11.5,
+        fontWeight: 500,
+        background: isOnline ? 'var(--purple)' : 'var(--bg-2)',
+        color: isOnline ? '#fff' : 'var(--tx-muted)',
+        border: 'none',
+        cursor: isOnline ? 'pointer' : 'not-allowed',
+        transition: 'all 0.15s ease',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 4,
+      }}
+      onMouseEnter={(e) => {
+        if (isOnline) {
+          e.currentTarget.style.background = 'var(--purple-dark)';
+          e.currentTarget.style.transform = 'translateY(-1px)';
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (isOnline) {
+          e.currentTarget.style.background = 'var(--purple)';
+          e.currentTarget.style.transform = 'translateY(0)';
+        }
+      }}
     >
-      🎥 {isOnline ? 'Entretien vidéo' : 'Hors ligne'}
+      🎥 {isOnline ? 'Entretien' : 'Hors ligne'}
     </button>
   );
 };

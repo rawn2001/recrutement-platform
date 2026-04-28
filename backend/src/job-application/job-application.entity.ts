@@ -1,4 +1,4 @@
-// src/job-application/job-application.entity.ts
+// backend/src/job-application/job-application.entity.ts
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { User } from '../users/users.entity';
 import { JobOffer } from '../job-offer/job-offer.entity';
@@ -11,14 +11,7 @@ export class JobApplication {
   @ManyToOne(() => User, user => user.applications)
   @JoinColumn({ name: 'candidate_id' })
   candidate: User;
-@Column({ nullable: true })
-quiz_score: number;  // Score du quiz (0-100)
 
-@Column({ nullable: true })
-quiz_session_id: number;  // Lien vers la session
-
-@Column({ nullable: true })
-final_score: number;  // (matching_score + quiz_score) / 2
   @Column({ name: 'candidate_id' })
   candidate_id: number;
 
@@ -43,8 +36,20 @@ final_score: number;  // (matching_score + quiz_score) / 2
 
   @Column({ nullable: true })
   matching_details: string;
-  //chayma
-    // ═══════════════════════════════════════════════════
+
+  @Column({ nullable: true })
+  quiz_score: number;
+
+  @Column({ nullable: true })
+  quiz_session_id: number;
+
+  @Column({ type: 'timestamp', nullable: true })
+  scheduledAt?: Date;
+
+  @Column({ nullable: true })
+  final_score: number;
+
+  // ═══════════════════════════════════════════════════
   // 🔹 CHAMPS ML - Classification & Matching
   // ═══════════════════════════════════════════════════
   
@@ -62,7 +67,13 @@ final_score: number;  // (matching_score + quiz_score) / 2
 
   @Column({ nullable: true })
   ml_model_used: string;
-  //chayma
+
+  // ═══════════════════════════════════════════════════
+  // 🔹 NOUVEAU: Session ID du rapport AI Interview
+  // ═══════════════════════════════════════════════════
+  
+  @Column({ nullable: true })
+  ai_report_session_id: string;  // ✅ ← AJOUTÉ ICI !
 
   @Column({ default: 'pending' })
   status: string;

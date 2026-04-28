@@ -93,6 +93,7 @@ function Sidebar({ user, activePath, navigate, onLogout }) {
         { path: '/dashboard', icon: '⬡', label: 'Tableau de bord' },
         { path: '/candidate/jobs', icon: '◎', label: "Offres d'emploi" },
         { path: '/candidate/my-applications', icon: '◷', label: 'Mes candidatures' },
+        { path: '/candidate/recommendations', icon: '🎯', label: 'Recommandation Métiers' },
         { path: '/profile', icon: '👤', label: 'Mon Profil' },
       ];
 

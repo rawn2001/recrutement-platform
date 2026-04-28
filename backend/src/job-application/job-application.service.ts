@@ -5,7 +5,7 @@ import { Repository } from 'typeorm';
 import { JobApplication } from './job-application.entity';
 import { JobOffer } from '../job-offer/job-offer.entity';
 import { MlService } from '../ml/ml.service';
-
+import { UpdateApplicationStatusDto } from './dto/update-application-status.dto';
 @Injectable()
 export class JobApplicationService {
   // ✅ Logger initialisé
@@ -151,25 +151,49 @@ export class JobApplicationService {
   }
 
   async findByCandidate(candidateId: number): Promise<JobApplication[]> {
-    return this.appRepo.find({ 
-      where: { candidate_id: candidateId }, 
-      relations: ['jobOffer'], 
-      order: { applied_at: 'DESC' } 
-    });
-  }
+  return this.appRepo.find({ 
+    where: { candidate_id: candidateId }, 
+    relations: ['jobOffer'], 
+    select: {
+      id: true,
+      status: true,
+      scheduledAt: true, // ← AJOUTE CETTE LIGNE
+      matching_score: true,
+      applied_at: true,
+      jobOffer: {
+        id: true,
+        title: true,
+        employment_type: true,
+        location: true,
+      }
+    },
+    order: { applied_at: 'DESC' } 
+  });
+}
 
-  async updateStatus(applicationId: number, recruiterId: number, status: string): Promise<JobApplication> {
-    const validStatuses = ['pending', 'reviewed', 'interview', 'accepted', 'rejected'];
-    if (!validStatuses.includes(status)) throw new BadRequestException('Statut invalide');
-    
-    await this.appRepo.update(applicationId, { status });
-    
-    const updated = await this.appRepo.findOne({ 
-      where: { id: applicationId }, 
-      relations: ['candidate', 'jobOffer'] 
-    });
-    if (!updated) throw new NotFoundException('Candidature non trouvée');
-    
-    return updated;
+async updateStatus(applicationId: number, recruiterId: number, dto: UpdateApplicationStatusDto): Promise<JobApplication> {
+  const validStatuses = ['pending', 'reviewed', 'interview', 'accepted', 'rejected'];
+  if (!validStatuses.includes(dto.status)) throw new BadRequestException('Statut invalide');
+  
+  // ✅ Préparer les données de mise à jour (TypeORM update() veut un objet simple)
+  const updateData: Partial<JobApplication> = { status: dto.status };
+  
+  // ✅ Gérer scheduledAt : undefined si pas présent, pas null
+  if (dto.scheduledAt) {
+    updateData.scheduledAt = new Date(dto.scheduledAt);
+  } else if (dto.status !== 'interview') {
+    // Si on quitte le statut interview, on retire la date
+    updateData.scheduledAt = undefined;
   }
+  
+  await this.appRepo.update(applicationId, updateData);
+  
+  const updated = await this.appRepo.findOne({ 
+    where: { id: applicationId }, 
+    relations: ['candidate', 'jobOffer']  // ← 'jobOffer' camelCase
+  });
+  if (!updated) throw new NotFoundException('Candidature non trouvée');
+  
+  return updated;
+}
 }
