@@ -1,0 +1,6 @@
+outs:
+- md5: 2de6cddf521464b138d3544203bc9896.dir
+  size: 21363075
+  nfiles: 1
+  hash: md5
+  path: emotions

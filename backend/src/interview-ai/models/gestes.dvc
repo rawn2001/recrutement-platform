@@ -1,0 +1,6 @@
+outs:
+- md5: a7b85f95cf1d78020aa4a845eab1a431.dir
+  size: 27656202
+  nfiles: 11
+  hash: md5
+  path: gestes
